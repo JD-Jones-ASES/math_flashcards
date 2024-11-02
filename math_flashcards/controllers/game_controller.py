@@ -33,7 +33,7 @@ class GameController:
         self.layout.WINDOW_HEIGHT = height
         
         # Set up initial window
-        pygame.display.set_caption('Math Flash Cards')
+        pygame.display.set_caption('Math Flash Cards @ All Saints')
         self.screen = pygame.display.set_mode(
             (self.width, self.height),
             pygame.RESIZABLE

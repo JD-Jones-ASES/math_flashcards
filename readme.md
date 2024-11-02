@@ -1,4 +1,12 @@
-# Math Flash Cards
+# AI Assisted Productivity in Education
+
+This package was written by Anthropic's Claude Sonnet 3.5 with human guidance. With few exceptions, all 
+files, including this one, for the most part, were written by Claude. This should be considered a proof 
+of concept, showing that teachers can make on-demand, targeted, AI-assisted resources for their schools. I 
+have attempted to follow reasonable licensing and versioning conventions, opting for complete open source.
+Please pardon lapses in proper practice. Claude did the best he could.
+
+## Math Flash Cards
 
 An interactive math practice application featuring adaptive learning, detailed analytics, and personalized difficulty progression.
 
