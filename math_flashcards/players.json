@@ -1,0 +1,148 @@
+{
+  "version": "0.8",
+  "last_updated": "2024-11-02T11:49:30.051352",
+  "players": [
+    {
+      "name": "Mr. Jones",
+      "creation_date": "2024-11-02T08:36:06.335741",
+      "last_active": null,
+      "total_problems_attempted": 0,
+      "total_correct": 0,
+      "current_streak": 0,
+      "best_streak": 0,
+      "time_spent_mins": 0.0,
+      "operation_stats": {
+        "+": {
+          "problems_attempted": 0,
+          "correct": 0,
+          "avg_response_time_ms": 0.0,
+          "accuracy": 0.0,
+          "fact_mastery": {
+            "+_1": 0.0,
+            "+_2": 0.0,
+            "+_3": 0.0,
+            "+_4": 0.0,
+            "+_5": 0.0,
+            "+_6": 0.0,
+            "+_7": 0.0,
+            "+_8": 0.0,
+            "+_9": 0.0,
+            "+_10": 0.0,
+            "+_11": 0.0,
+            "+_12": 0.0
+          },
+          "last_practiced": null
+        },
+        "-": {
+          "problems_attempted": 0,
+          "correct": 0,
+          "avg_response_time_ms": 0.0,
+          "accuracy": 0.0,
+          "fact_mastery": {
+            "-_1": 0.0,
+            "-_2": 0.0,
+            "-_3": 0.0,
+            "-_4": 0.0,
+            "-_5": 0.0,
+            "-_6": 0.0,
+            "-_7": 0.0,
+            "-_8": 0.0,
+            "-_9": 0.0,
+            "-_10": 0.0,
+            "-_11": 0.0,
+            "-_12": 0.0
+          },
+          "last_practiced": null
+        },
+        "*": {
+          "problems_attempted": 0,
+          "correct": 0,
+          "avg_response_time_ms": 0.0,
+          "accuracy": 0.0,
+          "fact_mastery": {
+            "*_1": 0.0,
+            "*_2": 0.0,
+            "*_3": 0.0,
+            "*_4": 0.0,
+            "*_5": 0.0,
+            "*_6": 0.0,
+            "*_7": 0.0,
+            "*_8": 0.0,
+            "*_9": 0.0,
+            "*_10": 0.0,
+            "*_11": 0.0,
+            "*_12": 0.0
+          },
+          "last_practiced": null
+        },
+        "/": {
+          "problems_attempted": 0,
+          "correct": 0,
+          "avg_response_time_ms": 0.0,
+          "accuracy": 0.0,
+          "fact_mastery": {
+            "/_1": 0.0,
+            "/_2": 0.0,
+            "/_3": 0.0,
+            "/_4": 0.0,
+            "/_5": 0.0,
+            "/_6": 0.0,
+            "/_7": 0.0,
+            "/_8": 0.0,
+            "/_9": 0.0,
+            "/_10": 0.0,
+            "/_11": 0.0,
+            "/_12": 0.0
+          },
+          "last_practiced": null
+        }
+      },
+      "difficulty_stats": {
+        "Intro": {
+          "problems_attempted": 0,
+          "correct": 0,
+          "avg_response_time_ms": 0.0,
+          "accuracy": 0.0,
+          "last_played": null
+        },
+        "Basic": {
+          "problems_attempted": 0,
+          "correct": 0,
+          "avg_response_time_ms": 0.0,
+          "accuracy": 0.0,
+          "last_played": null
+        },
+        "Medium": {
+          "problems_attempted": 0,
+          "correct": 0,
+          "avg_response_time_ms": 0.0,
+          "accuracy": 0.0,
+          "last_played": null
+        },
+        "Hard": {
+          "problems_attempted": 0,
+          "correct": 0,
+          "avg_response_time_ms": 0.0,
+          "accuracy": 0.0,
+          "last_played": null
+        },
+        "Custom": {
+          "problems_attempted": 0,
+          "correct": 0,
+          "avg_response_time_ms": 0.0,
+          "accuracy": 0.0,
+          "last_played": null
+        }
+      },
+      "achievement_stats": {
+        "perfect_sessions": 0,
+        "problems_solved_under_3s": 0,
+        "longest_streak": 0,
+        "total_practice_days": 0,
+        "consecutive_days_streak": 0,
+        "last_practice_date": null
+      },
+      "recent_sessions": []
+    }
+  ]
+}
