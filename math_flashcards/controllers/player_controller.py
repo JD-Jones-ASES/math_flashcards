@@ -138,7 +138,7 @@ class PlayerController:
         try:
             with open(self.data_file, 'r') as f:
                 data = json.load(f)
-                
+
             if not self._validate_player_data(data):
                 # Try to restore from latest backup
                 backup_file = self._find_latest_backup()
@@ -149,14 +149,42 @@ class PlayerController:
                     if not self._validate_player_data(data):
                         raise ValueError("Backup data also invalid")
                 else:
-                    raise ValueError("No valid backup found")
-                    
+                    logging.warning("No valid backup found. Creating new default data.")
+                    self._create_default_data()
+                    with open(self.data_file, 'r') as f:
+                        data = json.load(f)
+
             return [player["name"] for player in data["players"]]
-            
+
         except Exception as e:
             logging.error(f"Error loading players: {str(e)}")
             self._create_default_data()
             return ["Mr. Jones"]
+
+            # def load_players(self) -> List[str]:
+    #     """Load and return list of player names with validation"""
+    #     try:
+    #         with open(self.data_file, 'r') as f:
+    #             data = json.load(f)
+    #
+    #         if not self._validate_player_data(data):
+    #             # Try to restore from latest backup
+    #             backup_file = self._find_latest_backup()
+    #             if backup_file:
+    #                 logging.warning("Attempting to restore from backup")
+    #                 with open(backup_file, 'r') as f:
+    #                     data = json.load(f)
+    #                 if not self._validate_player_data(data):
+    #                     raise ValueError("Backup data also invalid")
+    #             else:
+    #                 raise ValueError("No valid backup found")
+    #
+    #         return [player["name"] for player in data["players"]]
+    #
+    #     except Exception as e:
+    #         logging.error(f"Error loading players: {str(e)}")
+    #         self._create_default_data()
+    #         return ["Mr. Jones"]
 
     def _find_latest_backup(self) -> Optional[str]:
         """Find the most recent backup file"""
@@ -228,7 +256,7 @@ class PlayerController:
             "last_updated": datetime.now().isoformat(),
             "players": [
                 {
-                    "name": "Mr. Jones",
+                    "name": "Player 1",  # Changed from Mr. Jones to Player 1
                     "creation_date": datetime.now().isoformat(),
                     "last_active": None,
                     "total_problems_attempted": 0,
@@ -242,7 +270,7 @@ class PlayerController:
                             "correct": 0,
                             "avg_response_time_ms": 0.0,
                             "accuracy": 0.0,
-                            "fact_mastery": {str(i): 0.0 for i in range(13)},
+                            "fact_mastery": {},  # Simplified - will be populated on first use
                             "last_practiced": None
                         }
                         for op in ['+', '-', '*', '/']
@@ -269,9 +297,65 @@ class PlayerController:
                 }
             ]
         }
-        
-        with open(self.data_file, 'w') as f:
-            json.dump(default_data, f, indent=2)
+
+        try:
+            with open(self.data_file, 'w') as f:
+                json.dump(default_data, f, indent=2)
+            logging.info("Created default player data file")
+        except Exception as e:
+            logging.error(f"Error creating default data: {str(e)}")
+
+    # def _create_default_data(self) -> None:
+    #     """Create default player data file"""
+    #     default_data = {
+    #         "version": "1.0",
+    #         "last_updated": datetime.now().isoformat(),
+    #         "players": [
+    #             {
+    #                 "name": "Mr. Jones",
+    #                 "creation_date": datetime.now().isoformat(),
+    #                 "last_active": None,
+    #                 "total_problems_attempted": 0,
+    #                 "total_correct": 0,
+    #                 "current_streak": 0,
+    #                 "best_streak": 0,
+    #                 "time_spent_mins": 0.0,
+    #                 "operation_stats": {
+    #                     op: {
+    #                         "problems_attempted": 0,
+    #                         "correct": 0,
+    #                         "avg_response_time_ms": 0.0,
+    #                         "accuracy": 0.0,
+    #                         "fact_mastery": {str(i): 0.0 for i in range(13)},
+    #                         "last_practiced": None
+    #                     }
+    #                     for op in ['+', '-', '*', '/']
+    #                 },
+    #                 "difficulty_stats": {
+    #                     diff: {
+    #                         "problems_attempted": 0,
+    #                         "correct": 0,
+    #                         "avg_response_time_ms": 0.0,
+    #                         "accuracy": 0.0,
+    #                         "last_played": None
+    #                     }
+    #                     for diff in ["Intro", "Basic", "Medium", "Hard", "Custom"]
+    #                 },
+    #                 "achievement_stats": {
+    #                     "perfect_sessions": 0,
+    #                     "problems_solved_under_3s": 0,
+    #                     "longest_streak": 0,
+    #                     "total_practice_days": 0,
+    #                     "consecutive_days_streak": 0,
+    #                     "last_practice_date": None
+    #                 },
+    #                 "recent_sessions": []
+    #             }
+    #         ]
+    #     }
+    #
+    #     with open(self.data_file, 'w') as f:
+    #         json.dump(default_data, f, indent=2)
 
     def create_player(self, name: str) -> Optional[Player]:
         """Create a new player"""
@@ -467,14 +551,19 @@ class PlayerController:
         try:
             with open(self.data_file, 'r') as f:
                 data = json.load(f)
-                
+
             if not self._validate_player_data(data):
                 logging.error("Data validation failed during player selection")
                 return None
-                
+
             for player_data in data["players"]:
                 if player_data["name"] == name:
                     try:
+                        # Initialize empty fact mastery if needed
+                        for op_stats in player_data["operation_stats"].values():
+                            if not op_stats["fact_mastery"]:
+                                op_stats["fact_mastery"] = {}
+
                         self.current_player = Player.from_dict(player_data)
                         self._update_last_active()
                         logging.info(f"Player {name} selected successfully")
@@ -482,13 +571,41 @@ class PlayerController:
                     except Exception as e:
                         logging.error(f"Error creating player object: {str(e)}")
                         return None
-                        
+
             logging.warning(f"Player {name} not found")
             return None
-            
+
         except Exception as e:
             logging.error(f"Error selecting player: {str(e)}")
             return None
+
+    # def select_player(self, name: str) -> Optional[Player]:
+    #     """Load and select a player by name with validation"""
+    #     try:
+    #         with open(self.data_file, 'r') as f:
+    #             data = json.load(f)
+    #
+    #         if not self._validate_player_data(data):
+    #             logging.error("Data validation failed during player selection")
+    #             return None
+    #
+    #         for player_data in data["players"]:
+    #             if player_data["name"] == name:
+    #                 try:
+    #                     self.current_player = Player.from_dict(player_data)
+    #                     self._update_last_active()
+    #                     logging.info(f"Player {name} selected successfully")
+    #                     return self.current_player
+    #                 except Exception as e:
+    #                     logging.error(f"Error creating player object: {str(e)}")
+    #                     return None
+    #
+    #         logging.warning(f"Player {name} not found")
+    #         return None
+    #
+    #     except Exception as e:
+    #         logging.error(f"Error selecting player: {str(e)}")
+    #         return None
             
     def _update_last_active(self) -> None:
         """Update last active timestamp for current player"""

@@ -8,7 +8,9 @@ Please pardon lapses in proper practice. Claude did the best he could.
 
 ## Math Flash Cards
 
-An interactive math practice application featuring adaptive learning, detailed analytics, and personalized difficulty progression.
+An interactive math practice application featuring adaptive learning, detailed analytics, and personalized 
+difficulty progression. The Hard and Custom difficulty levels are experimental. Skill practice for students 
+is found in Intro, Basic, and Medium.
 
 ## Features
 
