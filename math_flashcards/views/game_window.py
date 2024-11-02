@@ -5,6 +5,10 @@ from math_flashcards.models.player import Player
 from math_flashcards.views.login_dialog import LoginDialog
 from math_flashcards.views.ui_components import Button, ListItem, StatsPanel
 import math
+from math_flashcards.utils.version import (
+    VERSION, APP_NAME, APP_AUTHOR, APP_COPYRIGHT,
+    APP_LICENSE, APP_REPOSITORY
+)
 
 class GameWindow:
     """Main game window handling all display elements"""
@@ -14,47 +18,60 @@ class GameWindow:
         self.layout = Layout()
         self.layout.WINDOW_WIDTH = width
         self.layout.WINDOW_HEIGHT = height
-        
+
         self.screen = pygame.display.set_mode(
             (self.layout.WINDOW_WIDTH, self.layout.WINDOW_HEIGHT),
             pygame.RESIZABLE
         )
         pygame.display.set_caption('Math Flash Cards')
-        
+
         # Initialize fonts
         self.fonts = {
             size: pygame.font.Font(None, GameSettings.FONT_SIZES[size])
             for size in GameSettings.FONT_SIZES
         }
 
-        # Add admin button dimensions
-        self.admin_button_size = 32
-        self.admin_button_padding = 10
+        # Control button dimensions and state
+        self.control_button_size = 40
+        self.control_button_padding = 12
+
+        # Admin button in top right
         self.admin_button_rect = pygame.Rect(
-            self.layout.WINDOW_WIDTH - self.admin_button_size - self.admin_button_padding,
-            self.admin_button_padding,
-            self.admin_button_size,
-            self.admin_button_size
+            self.layout.WINDOW_WIDTH - self.control_button_size - self.control_button_padding,
+            self.control_button_padding,
+            self.control_button_size,
+            self.control_button_size
         )
+
+        # Info button to its left
+        self.info_button_rect = pygame.Rect(
+            self.layout.WINDOW_WIDTH - (self.control_button_size * 2) - (self.control_button_padding * 2),
+            self.control_button_padding,
+            self.control_button_size,
+            self.control_button_size
+        )
+
+        # Initialize panel states
         self.admin_panel_open = False
-        self.admin_confirm_delete = None  # Player name to confirm deletion
-        self.admin_message = None  # Feedback message
+        self.info_panel_open = False
+
+        # Initialize button states
+        self.admin_button_hover = False
+        self.info_button_hover = False
+        self.admin_button_pressed = False
+        self.info_button_pressed = False
+
+        # Initialize admin panel specific states
+        self.admin_confirm_delete = None
+        self.admin_message = None
         self.admin_message_timer = 0
         self.admin_scroll_offset = 0
         self.admin_hover_player = None
-
-        # Add about button dimensions (next to admin button)
-        self.about_button_rect = pygame.Rect(
-            self.layout.WINDOW_WIDTH - (2 * self.admin_button_size + 2 * self.admin_button_padding),
-            self.admin_button_padding,
-            self.admin_button_size,
-            self.admin_button_size
-        )
-        self.about_panel_open = False
+        self.admin_confirm_buttons = {}
 
         # Game session will be set after player selection
         self.game_session: Optional[Any] = None
-        
+
         # Initialize UI components
         self._init_ui_components()
 
@@ -198,13 +215,22 @@ class GameWindow:
 
     def _handle_mouse_click(self, pos: Tuple[int, int]) -> bool:
         """Handle mouse click events"""
-        # About button check (add before admin button check)
-        if self.about_button_rect.collidepoint(pos):
-            self.about_panel_open = not self.about_panel_open
+        # Admin button check
+        if self.admin_button_rect.collidepoint(pos):
+            self.admin_button_pressed = True
+            self.admin_panel_open = not self.admin_panel_open
+            self.info_panel_open = False  # Close info panel if open
             return True
 
-        # If about panel is open, check if click is outside panel to close it
-        if self.about_panel_open:
+        # Info button check
+        if self.info_button_rect.collidepoint(pos):
+            self.info_button_pressed = True
+            self.info_panel_open = not self.info_panel_open
+            self.admin_panel_open = False  # Close admin panel if open
+            return True
+
+        # If info panel is open, check for outside clicks to close it
+        if self.info_panel_open:
             panel_rect = pygame.Rect(
                 self.layout.WINDOW_WIDTH // 4,
                 self.layout.WINDOW_HEIGHT // 4,
@@ -212,21 +238,16 @@ class GameWindow:
                 self.layout.WINDOW_HEIGHT // 2
             )
             if not panel_rect.collidepoint(pos):
-                self.about_panel_open = False
+                self.info_panel_open = False
                 return True
-
-        # Admin button check
-        if self.admin_button_rect.collidepoint(pos):
-            self.admin_panel_open = not self.admin_panel_open
             return True
 
+        # If admin panel is open, handle its clicks first
         if self.admin_panel_open:
             if self._handle_admin_panel_click(pos):
                 return True
 
-        # If admin panel is open, check if click is outside panel to close it
-        if self.admin_panel_open:
-            # Simple check - close if clicked outside center area
+            # Check if click is outside panel to close it
             panel_rect = pygame.Rect(
                 self.layout.WINDOW_WIDTH // 4,
                 self.layout.WINDOW_HEIGHT // 4,
@@ -243,48 +264,71 @@ class GameWindow:
             if item.handle_click(pos, total_checked):
                 self.game_session.update_operators(op_symbol, item.checked)
                 return True
-                
-        # Rest of the method remains the same...
+
         # Handle difficulty selection
         for difficulty, button in self.difficulty_buttons.items():
             if button.handle_click(pos):
                 self.game_session.update_difficulty(difficulty)
                 return True
-                
+
         # Handle submit button
         if self.submit_button.handle_click(pos):
             self.game_session.check_answer()
             return True
-            
+
         # Handle load button
         if self.load_button.handle_click(pos):
-            pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'action': 'load'}))
+            pygame.event.post(pygame.event.Event(
+                pygame.USEREVENT,
+                {'action': 'load'}
+            ))
             return True
-            
+
         # Handle quit button
         if self.quit_button.handle_click(pos):
-            pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'action': 'quit'}))
+            pygame.event.post(pygame.event.Event(
+                pygame.USEREVENT,
+                {'action': 'quit'}
+            ))
             return True
-            
+
         return False
-        
+
     def update(self, current_time: int) -> None:
         """Update all game elements"""
         if not self.game_session:
             return
-            
-        # Update hover states
+
+        # Update button hover states
         mouse_pos = pygame.mouse.get_pos()
+        self.admin_button_hover = self.admin_button_rect.collidepoint(mouse_pos)
+        self.info_button_hover = self.info_button_rect.collidepoint(mouse_pos)
+
+        # Reset pressed states if mouse button is up
+        if not pygame.mouse.get_pressed()[0]:  # Left mouse button
+            self.admin_button_pressed = False
+            self.info_button_pressed = False
+
+        # Update operation item hover states
         for item in self.operation_items.values():
             item.update_hover(mouse_pos)
+
+        # Update difficulty button hover states
         for button in self.difficulty_buttons.values():
             button.update_hover(mouse_pos)
+
+        # Update main game button hover states
         self.submit_button.update_hover(mouse_pos)
         self.load_button.update_hover(mouse_pos)
         self.quit_button.update_hover(mouse_pos)
 
+        # Update admin panel hover states if open
         if self.admin_panel_open:
-            self._handle_admin_panel_hover(pygame.mouse.get_pos())
+            self._handle_admin_panel_hover(mouse_pos)
+
+            # Update admin message timer if exists
+            if self.admin_message and current_time - self.admin_message_timer > 2000:  # 2 seconds
+                self.admin_message = None
 
         # Update game session
         self.game_session.update(current_time)
@@ -298,46 +342,19 @@ class GameWindow:
         self._draw_sidebar()
         self._draw_main_content()
 
-        # Draw about button (before admin button)
-        pygame.draw.rect(self.screen, Colors.WHITE, self.about_button_rect)
-        pygame.draw.rect(self.screen, Colors.BORDER_GRAY, self.about_button_rect, 1)
+        # Draw control buttons
+        self._draw_control_button(self.admin_button_rect, 'admin',
+                                  self.admin_button_hover,
+                                  self.admin_button_pressed)
+        self._draw_control_button(self.info_button_rect, 'info',
+                                  self.info_button_hover,
+                                  self.info_button_pressed)
 
-        # Draw info icon (simple i)
-        text = self.fonts['normal'].render("i", True, Colors.TEXT_GRAY)
-        text_rect = text.get_rect(center=self.about_button_rect.center)
-        self.screen.blit(text, text_rect)
-
-        # Draw about panel if open
-        if self.about_panel_open:
-            self._draw_about_panel()
-
-        # Draw admin button
-        pygame.draw.rect(self.screen, Colors.WHITE, self.admin_button_rect)
-        pygame.draw.rect(self.screen, Colors.BORDER_GRAY, self.admin_button_rect, 1)
-
-        # Draw gear icon (simple representation)
-        center_x = self.admin_button_rect.centerx
-        center_y = self.admin_button_rect.centery
-        radius = self.admin_button_size // 3
-
-        # Draw outer circle
-        pygame.draw.circle(self.screen, Colors.TEXT_GRAY,
-                           (center_x, center_y), radius, 2)
-
-        # Draw "teeth" of the gear
-        for i in range(8):
-            angle = i * (360 / 8)
-            rad_angle = math.radians(angle)
-            start_x = center_x + int(radius * math.cos(rad_angle))
-            start_y = center_y + int(radius * math.sin(rad_angle))
-            end_x = center_x + int((radius + 4) * math.cos(rad_angle))
-            end_y = center_y + int((radius + 4) * math.sin(rad_angle))
-            pygame.draw.line(self.screen, Colors.TEXT_GRAY,
-                             (start_x, start_y), (end_x, end_y), 2)
-
-        # Draw admin panel if open
+        # Draw panels
         if self.admin_panel_open:
             self._draw_admin_panel()
+        elif self.info_panel_open:
+            self._draw_about_panel()
 
         pygame.display.flip()
 
@@ -412,16 +429,15 @@ class GameWindow:
         pygame.draw.polygon(self.screen, Colors.HIGHLIGHT, triangle_points, 3)
         
         # Draw operator
-        operator_symbol = GameSettings.OPERATION_SYMBOLS[
-            self.game_session.state.current_question.operator
-        ]
-        operator_surface = self.fonts['large'].render(
-            operator_symbol, True, Colors.BLACK
+        operator = self.game_session.state.current_question.operator
+        block_size = 60  # Adjust size as needed
+        block_rect = pygame.Rect(
+            center_x - block_size // 2,
+            center_y - block_size // 2,
+            block_size,
+            block_size
         )
-        self.screen.blit(
-            operator_surface,
-            operator_surface.get_rect(center=(center_x, center_y))
-        )
+        self._draw_operator_block(operator, block_rect)
         
         # Draw number boxes
         self._draw_number_boxes(center_x, center_y, half_size)
@@ -501,11 +517,9 @@ class GameWindow:
                 )
 
     def _draw_about_panel(self) -> None:
-        """Draw the about panel with version and license information"""
-        from math_flashcards.utils.version import (
-            VERSION, APP_NAME, APP_AUTHOR, APP_COPYRIGHT,
-            APP_LICENSE, APP_REPOSITORY
-        )
+        """Draw the about/info panel with game information"""
+        if not self.game_session:
+            return
 
         # Create semi-transparent overlay
         overlay = pygame.Surface((self.layout.WINDOW_WIDTH, self.layout.WINDOW_HEIGHT))
@@ -514,8 +528,8 @@ class GameWindow:
         self.screen.blit(overlay, (0, 0))
 
         # Calculate panel dimensions
-        panel_width = min(500, self.layout.WINDOW_WIDTH - 100)
-        panel_height = min(300, self.layout.WINDOW_HEIGHT - 100)
+        panel_width = min(600, self.layout.WINDOW_WIDTH - 100)
+        panel_height = min(500, self.layout.WINDOW_HEIGHT - 100)
         panel_x = (self.layout.WINDOW_WIDTH - panel_width) // 2
         panel_y = (self.layout.WINDOW_HEIGHT - panel_height) // 2
 
@@ -524,27 +538,68 @@ class GameWindow:
         pygame.draw.rect(self.screen, Colors.WHITE, panel_rect)
         pygame.draw.rect(self.screen, Colors.BORDER_GRAY, panel_rect, 2)
 
-        # Draw content
-        content = [
+        # Draw header
+        header_height = 40
+        header_rect = pygame.Rect(panel_x, panel_y, panel_width, header_height)
+        pygame.draw.rect(self.screen, (65, 135, 255), header_rect)  # Match info button color
+
+        header_text = self.fonts['normal'].render("About Math Flash Cards", True, Colors.WHITE)
+        self.screen.blit(header_text, (
+            panel_x + 15,
+            panel_y + (header_height - header_text.get_height()) // 2
+        ))
+
+        # Content area
+        content_x = panel_x + 20
+        content_y = panel_y + header_height + 20
+        line_height = 30
+
+        # About content
+        about_text = [
             (APP_NAME, Colors.BLACK, 'normal'),
             (f"Version {VERSION}", Colors.TEXT_GRAY, 'small'),
-            ("", Colors.BLACK, 'small'),  # Spacer
-            (f"by {APP_AUTHOR}", Colors.BLACK, 'small'),
+            ("", None, None),  # Spacer
+            ("An interactive math practice application featuring:", Colors.BLACK, 'small'),
+            ("• Adaptive Learning", Colors.TEXT_GRAY, 'small'),
+            ("• Multiple Operation Types", Colors.TEXT_GRAY, 'small'),
+            ("• Custom Difficulty Modes", Colors.TEXT_GRAY, 'small'),
+            ("• Progress Tracking", Colors.TEXT_GRAY, 'small'),
+            ("", None, None),  # Spacer
+            (f"Created by {APP_AUTHOR}", Colors.BLACK, 'small'),
+            (f"100% Open Source", Colors.INTRO_MODE, 'small'),
+            (f"{APP_LICENSE} License", Colors.TEXT_GRAY, 'small'),
+            ("", None, None),  # Spacer
             (APP_COPYRIGHT, Colors.TEXT_GRAY, 'small'),
-            ("", Colors.BLACK, 'small'),  # Spacer
-            (f"License: {APP_LICENSE}", Colors.TEXT_GRAY, 'small'),
+            ("", None, None),  # Spacer
+            ("Click anywhere outside this panel to close", Colors.TEXT_GRAY, 'small')
         ]
 
-        y = panel_y + 20
-        for text, color, size in content:
-            if text:  # Skip empty spacers for rendering
-                text_surface = self.fonts[size].render(text, True, color)
-                text_rect = text_surface.get_rect(
-                    centerx=panel_rect.centerx,
-                    top=y
-                )
-                self.screen.blit(text_surface, text_rect)
-            y += 30
+        # # About content
+        # about_text = [
+        #     ("Math Flash Cards", Colors.BLACK, 'normal'),
+        #     ("Version 0.8.0-beta+1", Colors.TEXT_GRAY, 'small'),
+        #     ("", None, None),  # Spacer
+        #     ("An interactive math practice application featuring:", Colors.BLACK, 'small'),
+        #     ("• Adaptive Learning", Colors.TEXT_GRAY, 'small'),
+        #     ("• Multiple Operation Types", Colors.TEXT_GRAY, 'small'),
+        #     ("• Custom Difficulty Modes", Colors.TEXT_GRAY, 'small'),
+        #     ("• Detailed Analytics", Colors.TEXT_GRAY, 'small'),
+        #     ("• Progress Tracking", Colors.TEXT_GRAY, 'small'),
+        #     ("", None, None),  # Spacer
+        #     ("Created by JD Jones", Colors.BLACK, 'small'),
+        #     ("MIT Open Source", Colors.TEXT_GRAY, 'small'),
+        #     ("", None, None),  # Spacer
+        #     ("Click anywhere outside this panel to close", Colors.TEXT_GRAY, 'small')
+        # ]
+
+        for line in about_text:
+            if line[1] is None:  # Spacer
+                content_y += line_height // 2
+                continue
+
+            text_surface = self.fonts[line[2]].render(line[0], True, line[1])
+            self.screen.blit(text_surface, (content_x, content_y))
+            content_y += line_height
 
     def _draw_admin_panel(self) -> None:
         """Draw the admin panel with player management"""
@@ -664,62 +719,6 @@ class GameWindow:
                     (x, item_y + item_height),
                     (x + width, item_y + item_height)
                 )
-
-    # def _draw_player_list(self, x: int, y: int, width: int, height: int) -> None:
-    #     """Draw scrollable player list with delete options"""
-    #     # Get player list from game session's player controller
-    #     player_controller = self.game_session.player_controller
-    #     players = player_controller.load_players()
-    #
-    #     # Calculate list metrics
-    #     item_height = 40
-    #     visible_items = height // item_height
-    #     max_scroll = max(0, len(players) - visible_items)
-    #
-    #     # Draw visible players
-    #     for i, player in enumerate(players[self.admin_scroll_offset:
-    #     self.admin_scroll_offset + visible_items]):
-    #         item_y = y + (i * item_height)
-    #         item_rect = pygame.Rect(x, item_y, width, item_height)
-    #
-    #         # Draw hover highlight
-    #         if self.admin_hover_player == (i + self.admin_scroll_offset):
-    #             pygame.draw.rect(self.screen, Colors.LIGHT_HIGHLIGHT, item_rect)
-    #
-    #         # Draw player name
-    #         name_surface = self.fonts['small'].render(player, True, Colors.BLACK)
-    #         self.screen.blit(name_surface, (x + 10, item_y + 10))
-    #
-    #         # Draw delete button if not default player
-    #         if player != "John Doe":
-    #             delete_text = "×"  # Using × symbol for delete
-    #             delete_surface = self.fonts['small'].render(delete_text, True, Colors.ERROR)
-    #             delete_rect = delete_surface.get_rect(
-    #                 right=x + width - 10,
-    #                 centery=item_y + item_height // 2
-    #             )
-    #
-    #             # Highlight delete button on hover
-    #             if (self.admin_hover_player == (i + self.admin_scroll_offset) and
-    #                     delete_rect.collidepoint(pygame.mouse.get_pos())):
-    #                 pygame.draw.circle(
-    #                     self.screen,
-    #                     Colors.ERROR,
-    #                     delete_rect.center,
-    #                     12
-    #                 )
-    #                 delete_surface = self.fonts['small'].render(delete_text, True, Colors.WHITE)
-    #
-    #             self.screen.blit(delete_surface, delete_rect)
-    #
-    #         # Draw separator line
-    #         if i < len(players) - 1:
-    #             pygame.draw.line(
-    #                 self.screen,
-    #                 Colors.BORDER_GRAY,
-    #                 (x, item_y + item_height),
-    #                 (x + width, item_y + item_height)
-    #             )
 
         # Draw scroll bar if needed
         if max_scroll > 0:
@@ -873,3 +872,277 @@ class GameWindow:
             self.admin_scroll_offset = min(max_scroll, self.admin_scroll_offset + 1)
         elif y < 0:
             self.admin_scroll_offset = max(0, self.admin_scroll_offset - 1)
+
+    def _draw_operator_block(self, operator: str, rect: pygame.Rect) -> None:
+        """Draw an operator block with sophisticated visual effects"""
+        # Color scheme
+        BASE_COLOR = (25, 45, 85)  # Dark navy
+        MID_COLOR = (35, 65, 115)  # Mid navy
+        TOP_COLOR = (45, 85, 145)  # Light navy
+        GLOW_COLOR = (65, 135, 255)  # Electric blue glow
+        SYMBOL_COLOR = (240, 240, 255)  # Slightly off-white for better contrast
+        EDGE_COLOR = (20, 35, 65)  # Darker navy for edges
+
+        padding = 4  # For inner shadow effect
+        radius = 12  # More pronounced rounded corners
+
+        # Draw multi-layered background for depth
+        for offset in range(3):
+            shadow_rect = rect.inflate(-offset * 2, -offset * 2)
+            pygame.draw.rect(self.screen, BASE_COLOR, shadow_rect,
+                             border_radius=radius - offset)
+
+        # Main block face with gradient effect
+        inner_rect = rect.inflate(-padding * 2, -padding * 2)
+        height = inner_rect.height
+        for y in range(inner_rect.top, inner_rect.bottom):
+            progress = (y - inner_rect.top) / height
+            if progress < 0.5:
+                # Top half - gradient from TOP_COLOR to MID_COLOR
+                factor = progress * 2
+                color = tuple(int(TOP_COLOR[i] + (MID_COLOR[i] - TOP_COLOR[i]) * factor)
+                              for i in range(3))
+            else:
+                # Bottom half - gradient from MID_COLOR to BASE_COLOR
+                factor = (progress - 0.5) * 2
+                color = tuple(int(MID_COLOR[i] + (BASE_COLOR[i] - MID_COLOR[i]) * factor)
+                              for i in range(3))
+
+            pygame.draw.line(self.screen, color,
+                             (inner_rect.left, y),
+                             (inner_rect.right, y))
+
+        # Redraw rounded corners for clean edges
+        pygame.draw.rect(self.screen, EDGE_COLOR, inner_rect,
+                         border_radius=radius - padding, width=1)
+
+        # Draw glossy highlight
+        highlight_rect = inner_rect.copy()
+        highlight_rect.height = highlight_rect.height // 2
+        highlight_surface = pygame.Surface(highlight_rect.size, pygame.SRCALPHA)
+        pygame.draw.rect(highlight_surface, (255, 255, 255, 25),
+                         highlight_surface.get_rect(),
+                         border_radius=radius - padding)
+        self.screen.blit(highlight_surface, highlight_rect)
+
+        # Center point for symbol drawing
+        center = rect.center
+        size = rect.width // 3
+        symbol_thickness = 4
+
+        # Function to draw glowing lines
+        def draw_glow_line(start_pos, end_pos, thickness):
+            # Outer glow
+            for glow in range(3):
+                glow_thickness = thickness + (3 - glow) * 2
+                glow_alpha = max(0, min(100 - glow * 30, 255))  # Clamp alpha value
+                glow_color = (*GLOW_COLOR, glow_alpha)
+                glow_surface = pygame.Surface(rect.size, pygame.SRCALPHA)
+                pygame.draw.line(glow_surface, glow_color,
+                                 (start_pos[0] - rect.left, start_pos[1] - rect.top),
+                                 (end_pos[0] - rect.left, end_pos[1] - rect.top),
+                                 glow_thickness)
+                self.screen.blit(glow_surface, rect)
+
+            # Main line
+            pygame.draw.line(self.screen, SYMBOL_COLOR, start_pos, end_pos, thickness)
+
+        # Draw operator symbol with glow effect
+        if operator == '+':
+            # Glowing plus
+            draw_glow_line(
+                (center[0] - size // 2, center[1]),
+                (center[0] + size // 2, center[1]),
+                symbol_thickness
+            )
+            draw_glow_line(
+                (center[0], center[1] - size // 2),
+                (center[0], center[1] + size // 2),
+                symbol_thickness
+            )
+        elif operator == '-':
+            # Glowing minus
+            draw_glow_line(
+                (center[0] - size // 2, center[1]),
+                (center[0] + size // 2, center[1]),
+                symbol_thickness
+            )
+        elif operator == '*':
+            # Glowing multiply
+            draw_glow_line(
+                (center[0] - size // 2, center[1] - size // 2),
+                (center[0] + size // 2, center[1] + size // 2),
+                symbol_thickness
+            )
+            draw_glow_line(
+                (center[0] - size // 2, center[1] + size // 2),
+                (center[0] + size // 2, center[1] - size // 2),
+                symbol_thickness
+            )
+        else:  # Division
+            # Glowing divide with spherical dots
+            dot_radius = symbol_thickness
+
+            # Function to draw glowing circle
+            def draw_glow_circle(pos, radius):
+                for glow in range(3):
+                    glow_radius = radius + (3 - glow) * 2
+                    glow_alpha = max(0, min(100 - glow * 30, 255))  # Clamp alpha value
+                    glow_color = (*GLOW_COLOR, glow_alpha)
+                    glow_surface = pygame.Surface(rect.size, pygame.SRCALPHA)
+                    pygame.draw.circle(glow_surface, glow_color,
+                                       (pos[0] - rect.left, pos[1] - rect.top),
+                                       glow_radius)
+                    self.screen.blit(glow_surface, rect)
+                pygame.draw.circle(self.screen, SYMBOL_COLOR, pos, radius)
+
+            draw_glow_circle((center[0], center[1] - size // 3), dot_radius)
+            draw_glow_line(
+                (center[0] - size // 2, center[1]),
+                (center[0] + size // 2, center[1]),
+                symbol_thickness
+            )
+            draw_glow_circle((center[0], center[1] + size // 3), dot_radius)
+
+        try:
+            # Add subtle pulsing animation
+            current_time = pygame.time.get_ticks()
+            pulse_alpha = int(abs(math.sin(current_time / 1000)) * 30)
+            pulse_alpha = max(0, min(pulse_alpha, 255))  # Clamp alpha value
+            pulse_surface = pygame.Surface(rect.size, pygame.SRCALPHA)
+            pygame.draw.rect(pulse_surface, (*GLOW_COLOR, pulse_alpha),
+                             pulse_surface.get_rect(),
+                             border_radius=radius, width=2)
+            self.screen.blit(pulse_surface, rect)
+        except Exception as e:
+            # Fail gracefully if pulse animation encounters any issues
+            print(f"Pulse animation skipped: {e}")
+
+    def _draw_control_button(self, rect: pygame.Rect, button_type: str,
+                             hover: bool, pressed: bool) -> None:
+        """Draw a stylized control button (admin or info)"""
+        # Color schemes
+        if button_type == 'admin':
+            BASE_COLOR = (145, 45, 85)  # Deep rose
+            MID_COLOR = (165, 65, 115)  # Mid rose
+            TOP_COLOR = (185, 85, 145)  # Light rose
+            GLOW_COLOR = (255, 135, 165)  # Pink glow
+        else:  # info
+            BASE_COLOR = (45, 85, 145)  # Deep teal
+            MID_COLOR = (65, 115, 165)  # Mid teal
+            TOP_COLOR = (85, 145, 185)  # Light teal
+            GLOW_COLOR = (135, 215, 255)  # Cyan glow
+
+        # Adjust colors if pressed
+        if pressed:
+            BASE_COLOR = tuple(max(0, c - 30) for c in BASE_COLOR)
+            MID_COLOR = tuple(max(0, c - 30) for c in MID_COLOR)
+            TOP_COLOR = tuple(max(0, c - 30) for c in TOP_COLOR)
+
+        radius = 10  # Rounded corners
+        padding = 3  # For inner shadow effect
+
+        # Draw multi-layered background for depth
+        for offset in range(3):
+            shadow_rect = rect.inflate(-offset * 2, -offset * 2)
+            pygame.draw.rect(self.screen, BASE_COLOR, shadow_rect,
+                             border_radius=radius - offset)
+
+        # Main button face with gradient effect
+        inner_rect = rect.inflate(-padding * 2, -padding * 2)
+        height = inner_rect.height
+
+        # Gradient background
+        for y in range(inner_rect.top, inner_rect.bottom):
+            progress = (y - inner_rect.top) / height
+            if progress < 0.5:
+                factor = progress * 2
+                color = tuple(int(TOP_COLOR[i] + (MID_COLOR[i] - TOP_COLOR[i]) * factor)
+                              for i in range(3))
+            else:
+                factor = (progress - 0.5) * 2
+                color = tuple(int(MID_COLOR[i] + (BASE_COLOR[i] - MID_COLOR[i]) * factor)
+                              for i in range(3))
+
+            pygame.draw.line(self.screen, color,
+                             (inner_rect.left, y),
+                             (inner_rect.right, y))
+
+        # Draw icon
+        icon_color = (240, 240, 255)  # Slightly off-white
+        icon_surface = pygame.Surface(inner_rect.size, pygame.SRCALPHA)
+        icon_rect = icon_surface.get_rect()
+
+        if button_type == 'admin':
+            # Gear icon
+            center = icon_rect.center
+            outer_radius = min(icon_rect.width, icon_rect.height) // 3
+            inner_radius = outer_radius * 0.7
+            teeth = 8
+
+            # Draw gear teeth with glow
+            for i in range(teeth):
+                angle = i * (360 / teeth)
+                rad_angle = math.radians(angle)
+
+                # Outer point
+                outer_x = center[0] + outer_radius * math.cos(rad_angle)
+                outer_y = center[1] + outer_radius * math.sin(rad_angle)
+
+                # Inner point
+                inner_x = center[0] + inner_radius * math.cos(rad_angle)
+                inner_y = center[1] + inner_radius * math.sin(rad_angle)
+
+                # Draw glowing tooth
+                for glow in range(3):
+                    glow_alpha = max(0, min(100 - glow * 30, 255))
+                    pygame.draw.line(icon_surface, (*GLOW_COLOR, glow_alpha),
+                                     (inner_x, inner_y),
+                                     (outer_x, outer_y),
+                                     3 - glow)
+
+                pygame.draw.line(icon_surface, icon_color,
+                                 (inner_x, inner_y),
+                                 (outer_x, outer_y), 2)
+
+            # Draw central circle
+            pygame.draw.circle(icon_surface, icon_color, center, inner_radius - 2, 2)
+
+        else:  # info icon
+            # Stylized "i" with glow
+            center = icon_rect.center
+            radius = min(icon_rect.width, icon_rect.height) // 3
+
+            # Draw dot
+            for glow in range(3):
+                glow_alpha = max(0, min(100 - glow * 30, 255))
+                pygame.draw.circle(icon_surface, (*GLOW_COLOR, glow_alpha),
+                                   (center[0], center[1] - radius),
+                                   4 + glow)
+            pygame.draw.circle(icon_surface, icon_color,
+                               (center[0], center[1] - radius), 4)
+
+            # Draw stem
+            for glow in range(3):
+                glow_alpha = max(0, min(100 - glow * 30, 255))
+                pygame.draw.line(icon_surface, (*GLOW_COLOR, glow_alpha),
+                                 (center[0], center[1] - radius + 8),
+                                 (center[0], center[1] + radius),
+                                 4 + glow)
+            pygame.draw.line(icon_surface, icon_color,
+                             (center[0], center[1] - radius + 8),
+                             (center[0], center[1] + radius), 4)
+
+        self.screen.blit(icon_surface, inner_rect)
+
+        # Add hover glow
+        if hover:
+            current_time = pygame.time.get_ticks()
+            base_alpha = int(abs(math.sin(current_time / 1000)) * 30)
+            hover_alpha = max(0, min(base_alpha + (30 if hover else 0), 255))
+
+            glow_surface = pygame.Surface(rect.size, pygame.SRCALPHA)
+            pygame.draw.rect(glow_surface, (*GLOW_COLOR, hover_alpha),
+                             glow_surface.get_rect(),
+                             border_radius=radius, width=2)
+            self.screen.blit(glow_surface, rect)

@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2024-11-02T16:46:44.054704",
+  "last_updated": "2024-11-02T13:07:56.900446",
   "players": [
     {
       "name": "Mr. Jones",
@@ -153,24 +153,15 @@
           "correct": 27,
           "operations_used": [
             "-",
-            "*",
+            "/",
             "+",
-            "/"
+            "*"
           ],
           "difficulty_levels": [
-            "Intro",
-            "Custom"
+            "Custom",
+            "Intro"
           ],
           "avg_response_time_ms": 2794.430079283538
-        },
-        {
-          "date": "2024-11-02",
-          "duration_mins": 0.0,
-          "problems_attempted": 0,
-          "correct": 0,
-          "operations_used": [],
-          "difficulty_levels": [],
-          "avg_response_time_ms": 0.0
         }
       ]
     }

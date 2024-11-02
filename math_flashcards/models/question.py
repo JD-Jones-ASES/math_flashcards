@@ -171,44 +171,6 @@ class SubtractionGenerator(BaseNumberGenerator):
 
         return (num1, num2)  # Return last generated pair if no unique ones found
 
-    # def generate_numbers(self, config: 'QuestionConfig') -> Tuple[float, float]:
-    #     """Generate subtraction problems with pedagogical patterns"""
-    #     min_val, max_val = config.number_range
-    #     accuracy, avg_time = self._get_recent_performance()
-    #
-    #     # Adjust frequencies based on performance
-    #     if accuracy < 0.7:
-    #         self.fact_family_frequency = 0.4
-    #         self.bridging_ten_frequency = 0.3
-    #
-    #     for _ in range(10):
-    #         pattern = random.random()
-    #
-    #         if pattern < self.fact_family_frequency:
-    #             # Generate from addition fact families
-    #             base = random.randint(min_val, max_val - 5)
-    #             addend = random.randint(1, 5)
-    #             num1 = base + addend
-    #             num2 = random.choice([base, addend])
-    #         elif pattern < self.fact_family_frequency + self.bridging_ten_frequency:
-    #             # Generate problems that bridge tens (e.g., 32-5)
-    #             base = random.randint(1, (max_val // 10)) * 10
-    #             num1 = base + random.randint(1, 5)
-    #             num2 = random.randint(2, 7)
-    #         else:
-    #             if config.allows_negative:
-    #                 num1 = random.randint(-max_val, max_val)
-    #                 num2 = random.randint(-max_val, max_val)
-    #             else:
-    #                 num2 = random.randint(min_val, max_val)
-    #                 num1 = random.randint(num2, max_val)  # Ensures positive result
-    #
-    #         if not self._numbers_recently_used(num1, num2):
-    #             self._track_numbers(num1, num2)
-    #             return (num1, num2)
-    #
-    #     return (num1, num2)
-
     def get_fact_family(self, num1: float, num2: float) -> Set[Tuple[float, float]]:
         """Get related subtraction facts"""
         result = num1 - num2

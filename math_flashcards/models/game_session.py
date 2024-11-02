@@ -63,41 +63,6 @@ class GameSession:
 
         return False
 
-    # def handle_input(self, event: pygame.event.Event) -> bool:
-    #     """Handle keyboard input for the current question"""
-    #     if not self.state.current_question:
-    #         return False
-    #
-    #     config = QuestionConfig.from_difficulty(self.state.difficulty)
-    #
-    #     # Handle both regular Enter and numpad Enter
-    #     if (event.key in (pygame.K_RETURN, pygame.K_KP_ENTER) and
-    #         self.state.user_input):
-    #         self.check_answer()
-    #         return True
-    #
-    #     elif event.key == pygame.K_BACKSPACE:
-    #         self.state.user_input = self.state.user_input[:-1]
-    #         return True
-    #
-    #     elif event.unicode.isprintable():
-    #         # Handle numeric input
-    #         valid_chars = set('0123456789')
-    #         if config.requires_decimals:
-    #             valid_chars.add('.')
-    #         if config.allows_negative and not self.state.user_input:
-    #             valid_chars.add('-')
-    #
-    #         if (event.unicode in valid_chars and
-    #             self.state.current_question.validate_input(
-    #                 self.state.user_input + event.unicode,
-    #                 config.max_digits
-    #             )):
-    #             self.state.user_input += event.unicode
-    #             return True
-    #
-    #     return False
-
     def check_answer(self) -> bool:
         """Check the current answer and update statistics"""
         if not self.state.current_question:
