@@ -50,7 +50,6 @@ cover/
 .settings/
 
 # Project specific
-players.json
 backups/
 player_controller.log
 *.bak
