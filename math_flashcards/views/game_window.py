@@ -24,7 +24,7 @@ class GameWindow:
             (self.layout.WINDOW_WIDTH, self.layout.WINDOW_HEIGHT),
             pygame.RESIZABLE
         )
-        pygame.display.set_caption('Math Flash Cards')
+        pygame.display.set_caption('Math Flashcards')
 
         # Initialize fonts
         self.fonts = {
