@@ -33,32 +33,46 @@ class Button:
         self._pressed = False
 
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
-        """Draw the button with a clean, modern style"""
-        # Calculate colors
+        """Draw the button with navy theme styling"""
+        # Calculate colors based on state
         if self.disabled:
-            fill_color = (245, 245, 245)
+            fill_color = Colors.WIN_GRAY
             border_color = Colors.BORDER_GRAY
+            text_color = Colors.TEXT_GRAY
         else:
-            # Create a very light tint of the base color
-            # Mix more white but keep some of the original color
-            fill_color = tuple(int((c * 0.15) + (255 * 0.85)) for c in self.base_color)
+            # Start with base color
+            base = self.base_color
 
+            # Create color variations
             if self.selected:
-                # Selected state: slightly stronger fill color
-                fill_color = tuple(int((c * 0.25) + (255 * 0.75)) for c in self.base_color)
-                border_color = self.base_color
+                # Selected: stronger color
+                fill_color = tuple(int((c * 0.9) + (255 * 0.1)) for c in base)
+                border_color = base
+                text_color = Colors.WHITE
             elif self.hover:
-                # Hover: slightly stronger than normal
-                fill_color = tuple(int((c * 0.2) + (255 * 0.8)) for c in self.base_color)
-                border_color = self.base_color
+                # Hover: lighter variation
+                fill_color = tuple(int((c * 0.2) + (255 * 0.8)) for c in base)
+                border_color = base
+                text_color = Colors.NAVY_DARK
             else:
-                border_color = self.base_color
+                # Normal: very light tint
+                fill_color = tuple(int((c * 0.1) + (255 * 0.9)) for c in base)
+                border_color = base
+                text_color = Colors.NAVY_PRIMARY
 
         # Pressed effect
         if self._pressed and not self.disabled:
             self.rect.y += 1
-            # Slightly stronger color when pressed
+            # Darker when pressed
             fill_color = tuple(int((c * 0.3) + (255 * 0.7)) for c in self.base_color)
+            text_color = Colors.WHITE
+
+        # Draw button with shadow
+        if not self.disabled and not self._pressed:
+            shadow_rect = self.rect.copy()
+            shadow_rect.y += 2
+            pygame.draw.rect(surface, Colors.NAVY_DARKEST,
+                             shadow_rect, border_radius=self.border_radius)
 
         # Draw filled background
         pygame.draw.rect(surface, fill_color, self.rect,
@@ -69,8 +83,29 @@ class Button:
         pygame.draw.rect(surface, border_color, self.rect,
                          border_radius=self.border_radius, width=border_width)
 
-        # Draw text
-        text_color = Colors.TEXT_GRAY if self.disabled else Colors.BLACK
+        # Draw glossy highlight if not pressed
+        if not self._pressed and not self.disabled:
+            highlight_rect = self.rect.copy()
+            highlight_rect.height = self.rect.height // 2
+            highlight_surface = pygame.Surface(highlight_rect.size, pygame.SRCALPHA)
+            pygame.draw.rect(highlight_surface, (255, 255, 255, 25),
+                             highlight_surface.get_rect(),
+                             border_radius=self.border_radius)
+            surface.blit(highlight_surface, highlight_rect)
+
+        # Draw text with optional glow for selected state
+        if self.selected and not self.disabled:
+            # Draw text glow
+            glow_color = (*Colors.NAVY_LIGHTEST, 128)
+            for offset in [-1, 1]:
+                glow_surface = font.render(self.text, True, glow_color)
+                glow_rect = glow_surface.get_rect(center=self.rect.center)
+                glow_rect.x += offset
+                surface.blit(glow_surface, glow_rect)
+                glow_rect.y += offset
+                surface.blit(glow_surface, glow_rect)
+
+        # Draw main text
         text_surface = font.render(self.text, True, text_color)
         text_rect = text_surface.get_rect(center=self.rect.center)
         surface.blit(text_surface, text_rect)

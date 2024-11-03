@@ -27,9 +27,9 @@ from typing import Dict, Any
 # Version information
 VERSION_MAJOR = 0
 VERSION_MINOR = 8
-VERSION_PATCH = 3
+VERSION_PATCH = 4
 VERSION_TAG = "Beta"  # Can be alpha, beta, rc1, etc., or empty string for release
-BUILD_NUMBER = "4"  # Incremented with each build
+BUILD_NUMBER = "1"  # Incremented with each build
 
 # Generate version string
 VERSION = f"{VERSION_MAJOR}.{VERSION_MINOR}.{VERSION_PATCH}"
