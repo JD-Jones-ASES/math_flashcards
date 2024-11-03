@@ -1,5 +1,5 @@
 """
-Version and build information for Math Flash Cards
+Version and build information for Math Flashcards
 ------------------------------------------------
 This module provides centralized version information and metadata
 for both development and executable builds.
@@ -27,9 +27,9 @@ from typing import Dict, Any
 # Version information
 VERSION_MAJOR = 0
 VERSION_MINOR = 8
-VERSION_PATCH = 2
+VERSION_PATCH = 3
 VERSION_TAG = "Beta"  # Can be alpha, beta, rc1, etc., or empty string for release
-BUILD_NUMBER = "3"  # Incremented with each build
+BUILD_NUMBER = "4"  # Incremented with each build
 
 # Generate version string
 VERSION = f"{VERSION_MAJOR}.{VERSION_MINOR}.{VERSION_PATCH}"
@@ -39,7 +39,7 @@ if BUILD_NUMBER:
     VERSION = f"{VERSION}+{BUILD_NUMBER}"
 
 # Application metadata
-APP_NAME = "Math Flash Cards @ All Saints"
+APP_NAME = "Math Flashcards"
 APP_AUTHOR = "JD Jones"
 APP_ID = "org.mathflashcards.app"  # Unique application identifier
 APP_LICENSE = "MIT"
@@ -85,7 +85,7 @@ WINDOWS_METADATA = {
     "FileVersion": VERSION,
     "InternalName": "mathflashcards",
     "LegalCopyright": APP_COPYRIGHT,
-    "OriginalFilename": "MathFlashCards.exe",
+    "OriginalFilename": "MathFlashcards.exe",
     "ProductName": APP_NAME,
     "ProductVersion": VERSION
 }

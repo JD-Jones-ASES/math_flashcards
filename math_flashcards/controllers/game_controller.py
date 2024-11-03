@@ -50,7 +50,7 @@ class GameController:
         # pygame.display.set_icon(icon)
 
         # Set up initial window
-        pygame.display.set_caption('Math Flash Cards @ All Saints')
+        pygame.display.set_caption('Math Flash Cards')
         self.screen = pygame.display.set_mode(
             (self.width, self.height),
             pygame.RESIZABLE

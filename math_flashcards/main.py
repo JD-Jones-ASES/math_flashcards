@@ -1,5 +1,5 @@
 """
-Main entry point for the Math Flash Cards application.
+Main entry point for the Math Flashcards application.
 """
 import os
 import sys
