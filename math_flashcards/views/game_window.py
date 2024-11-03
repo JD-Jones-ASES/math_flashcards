@@ -691,25 +691,26 @@ class GameWindow:
 
             # Draw delete button only for non-protected players
             if player != "Mr. Jones":
-                delete_text = "×"  # Using × symbol for delete
-                delete_surface = self.fonts['small'].render(delete_text, True, Colors.ERROR)
-                delete_rect = delete_surface.get_rect(
-                    right=x + width - 10,
-                    centery=item_y + item_height // 2
+                delete_rect = pygame.Rect(
+                    x + width - 40,  # Wider clickable area
+                    item_y + (item_height - 30) // 2,  # Centered vertically
+                    30,  # Wider button
+                    30  # Taller button
                 )
 
-                # Highlight delete button on hover
-                if (self.admin_hover_player == (i + self.admin_scroll_offset) and
-                        delete_rect.collidepoint(pygame.mouse.get_pos())):
-                    pygame.draw.circle(
-                        self.screen,
-                        Colors.ERROR,
-                        delete_rect.center,
-                        12
-                    )
-                    delete_surface = self.fonts['small'].render(delete_text, True, Colors.WHITE)
+                # Draw delete button background on hover
+                button_hover = (self.admin_hover_player == (i + self.admin_scroll_offset) and
+                                delete_rect.collidepoint(pygame.mouse.get_pos()))
 
-                self.screen.blit(delete_surface, delete_rect)
+                if button_hover:
+                    pygame.draw.rect(self.screen, Colors.ERROR, delete_rect, border_radius=15)
+                    delete_text = self.fonts['small'].render("×", True, Colors.WHITE)
+                else:
+                    delete_text = self.fonts['small'].render("×", True, Colors.ERROR)
+
+                # Center the × symbol in the button
+                text_rect = delete_text.get_rect(center=delete_rect.center)
+                self.screen.blit(delete_text, text_rect)
 
             # Draw separator line
             if i < len(players) - 1:
@@ -787,9 +788,6 @@ class GameWindow:
             for action, rect in self.admin_confirm_buttons.items():
                 if rect.collidepoint(pos):
                     if action == 'delete':
-                        # Change this line:
-                        # Old: success = self.game_session.player.player_controller.delete_player(
-                        # New:
                         success = self.game_session.player_controller.delete_player(
                             self.admin_confirm_delete
                         )
@@ -820,15 +818,15 @@ class GameWindow:
 
         for i, player in enumerate(players[self.admin_scroll_offset:
         self.admin_scroll_offset + visible_items]):
-            if player == "John Doe":
+            if player == "Mr. Jones":
                 continue
 
             item_y = content_y + (i * item_height)
             delete_rect = pygame.Rect(
-                content_x + content_width - 30,
-                item_y + 5,
-                25,
-                25
+                content_x + content_width - 40,  # Match _draw_player_list
+                item_y + (item_height - 30) // 2,
+                30,
+                30
             )
 
             if delete_rect.collidepoint(pos):

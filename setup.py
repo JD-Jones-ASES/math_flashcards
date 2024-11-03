@@ -49,7 +49,7 @@ if sys.platform.startswith('win'):
 
 setup(
     name="math_flashcards",
-    version="0.8.1",
+    version="v0.8.2",
     author="JD Jones",
     description="Open Source Interactive Math Practice Application",
     long_description=open(

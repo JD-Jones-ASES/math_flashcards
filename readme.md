@@ -79,7 +79,8 @@ math_flashcards/
 ├── controllers/       # Game logic and control flow
 ├── models/           # Data structures and business logic
 ├── utils/            # Helper functions and constants
-└── views/            # UI components and rendering
+├── views/            # UI components and rendering
+└── data/            # Data files
 ```
 
 ### Key Components
@@ -156,7 +157,7 @@ Current Version: 0.8.0-beta+1
 pip install -e .[build]
 
 # Build executable (Windows)
-pyinstaller math_flashcards.spec
+pyinstaller main.spec
 ```
 
 ### Data Storage

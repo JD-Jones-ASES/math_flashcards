@@ -1,6 +1,8 @@
 import json
 import os
+import sys
 import shutil
+import pathlib
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 import logging
@@ -9,25 +11,62 @@ from math_flashcards.utils.constants import GameSettings
 
 class PlayerController:
     """Controls player data management and persistence with improved validation and backup"""
-    def __init__(self, data_file: str = "players.json", backup_dir: str = "backups"):
-        self.data_file = data_file
-        self.backup_dir = backup_dir
+    def __init__(self, backup_dir: str = "backups"):
+        # Get the application base directory
+        if getattr(sys, 'frozen', False):
+            # If running as compiled executable
+            base_dir = pathlib.Path(sys._MEIPASS)
+        else:
+            # If running from source
+            base_dir = pathlib.Path(__file__).parent.parent
+
+        # Set up all paths first
+        self.data_dir = base_dir / "data"
+        if not self.data_dir.exists():
+            self.data_dir.mkdir(parents=True, exist_ok=True)
+
+        # Keep all data files together
+        self.backup_dir = self.data_dir / backup_dir
+        self.data_file = self.data_dir.absolute() / "players.json"
+        self.log_file = self.data_dir.absolute() / "player_controller.log"
+
+        # Initialize directories
+        self.backup_dir.mkdir(parents=True, exist_ok=True)
+
+        # Now set up logging based on execution context
+        if getattr(sys, 'frozen', False):
+            # Use simpler logging for frozen executable
+            logging.basicConfig(
+                filename=str(self.log_file),  # Convert Path to string
+                level=logging.INFO,
+                format='%(asctime)s - %(levelname)s - %(message)s'
+            )
+            self.logger = logging.getLogger('PlayerController')
+        else:
+            # Use rotating file handler for development
+            from logging.handlers import RotatingFileHandler
+            handler = RotatingFileHandler(
+                self.log_file,
+                maxBytes=1024 * 1024,  # 1MB max file size
+                backupCount=2
+            )
+            handler.setFormatter(logging.Formatter(
+                '%(asctime)s - %(levelname)s - %(message)s'
+            ))
+            logger = logging.getLogger('PlayerController')
+            logger.setLevel(logging.INFO)
+            logger.handlers = []
+            logger.addHandler(handler)
+            logger.propagate = False
+            self.logger = logger
+
+        # Initialize remaining attributes
         self.current_player: Optional[Player] = None
         self.auto_save_interval = GameSettings.ANALYTICS['save_interval']
         self.last_save_time = datetime.now()
-        
-        # Set up logging
-        logging.basicConfig(
-            filename='player_controller.log',
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s'
-        )
-        
-        # Initialize directories
-        os.makedirs(backup_dir, exist_ok=True)
-        
+
         # Initialize data file if it doesn't exist
-        if not os.path.exists(data_file):
+        if not self.data_file.exists():
             self._create_default_data()
 
     def _validate_player_data(self, data: Dict) -> bool:
@@ -36,19 +75,19 @@ class PlayerController:
             # Check required top-level fields
             required_fields = ["version", "last_updated", "players"]
             if not all(field in data for field in required_fields):
-                logging.error("Missing required fields in player data")
+                self.logger.error("Missing required fields in player data")
                 return False
                 
             # Validate version
             if data["version"] != "1.0":
-                logging.error(f"Unsupported data version: {data['version']}")
+                self.logger.error(f"Unsupported data version: {data['version']}")
                 return False
                 
             # Validate last_updated timestamp
             try:
                 datetime.fromisoformat(data["last_updated"])
             except ValueError:
-                logging.error("Invalid last_updated timestamp")
+                self.logger.error("Invalid last_updated timestamp")
                 return False
                 
             # Validate each player's data
@@ -59,7 +98,7 @@ class PlayerController:
             return True
             
         except Exception as e:
-            logging.error(f"Validation error: {str(e)}")
+            self.logger.error(f"Validation error: {str(e)}")
             return False
 
     def _validate_single_player(self, player: Dict) -> bool:
@@ -72,7 +111,7 @@ class PlayerController:
         try:
             # Check required fields
             if not all(field in player for field in required_fields):
-                logging.error(f"Missing required fields for player {player.get('name', 'UNKNOWN')}")
+                self.logger.error(f"Missing required fields for player {player.get('name', 'UNKNOWN')}")
                 return False
                 
             # Validate numeric fields are non-negative
@@ -81,40 +120,37 @@ class PlayerController:
             for field in numeric_fields:
                 if field in player and (not isinstance(player[field], (int, float)) or 
                                       player[field] < 0):
-                    logging.error(f"Invalid {field} value for player {player['name']}")
+                    self.logger.error(f"Invalid {field} value for player {player['name']}")
                     return False
                     
             # Validate statistics consistency
             if player["total_problems_attempted"] < player["total_correct"]:
-                logging.error(f"Inconsistent attempt/correct counts for player {player['name']}")
+                self.logger.error(f"Inconsistent attempt/correct counts for player {player['name']}")
                 return False
                 
             return True
             
         except Exception as e:
-            logging.error(f"Player validation error: {str(e)}")
+            self.logger.error(f"Player validation error: {str(e)}")
             return False
 
     def _create_backup(self) -> bool:
         """Create a backup of the current player data"""
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup_file = os.path.join(
-                self.backup_dir, 
-                f"players_backup_{timestamp}.json"
-            )
-            
+            backup_file = self.backup_dir / f"players_backup_{timestamp}.json"
+
             # Create backup
             shutil.copy2(self.data_file, backup_file)
-            
-            # Cleanup old backups (keep last 10)
+
+            # Cleanup old backups
             self._cleanup_old_backups()
-            
-            logging.info(f"Backup created: {backup_file}")
+
+            self.logger.info(f"Backup created: {backup_file}")
             return True
-            
+
         except Exception as e:
-            logging.error(f"Backup creation failed: {str(e)}")
+            self.logger.error(f"Backup creation failed: {str(e)}")
             return False
 
     def _cleanup_old_backups(self) -> None:
@@ -131,7 +167,7 @@ class PlayerController:
                 os.remove(backups.pop(0))
                 
         except Exception as e:
-            logging.error(f"Backup cleanup failed: {str(e)}")
+            self.logger.error(f"Backup cleanup failed: {str(e)}")
 
     def load_players(self) -> List[str]:
         """Load and return list of player names with validation"""
@@ -143,13 +179,13 @@ class PlayerController:
                 # Try to restore from latest backup
                 backup_file = self._find_latest_backup()
                 if backup_file:
-                    logging.warning("Attempting to restore from backup")
+                    self.logger.warning("Attempting to restore from backup")
                     with open(backup_file, 'r') as f:
                         data = json.load(f)
                     if not self._validate_player_data(data):
                         raise ValueError("Backup data also invalid")
                 else:
-                    logging.warning("No valid backup found. Creating new default data.")
+                    self.logger.warning("No valid backup found. Creating new default data.")
                     self._create_default_data()
                     with open(self.data_file, 'r') as f:
                         data = json.load(f)
@@ -157,19 +193,19 @@ class PlayerController:
             return [player["name"] for player in data["players"]]
 
         except Exception as e:
-            logging.error(f"Error loading players: {str(e)}")
+            self.logger.error(f"Error loading players: {str(e)}")
             self._create_default_data()
             return ["Mr. Jones"]
 
-    def _find_latest_backup(self) -> Optional[str]:
+    def _find_latest_backup(self) -> Optional[pathlib.Path]:
         """Find the most recent backup file"""
         try:
-            backups = sorted([
-                os.path.join(self.backup_dir, f)
-                for f in os.listdir(self.backup_dir)
-                if f.startswith("players_backup_")
-            ])
-            return backups[-1] if backups else None
+            backups = sorted(
+                [f for f in self.backup_dir.glob("players_backup_*.json")],
+                key=lambda x: x.stat().st_mtime,
+                reverse=True
+            )
+            return backups[0] if backups else None
         except Exception:
             return None
 
@@ -202,14 +238,14 @@ class PlayerController:
                         break
             
             if not updated:
-                logging.error(f"Player {self.current_player.name} not found in data file")
+                self.logger.error(f"Player {self.current_player.name} not found in data file")
                 return False
                 
             data["last_updated"] = current_time.isoformat()
             
             # Validate complete data before saving
             if not self._validate_player_data(data):
-                logging.error("Data validation failed before save")
+                self.logger.error("Data validation failed before save")
                 return False
                 
             # Save updated data
@@ -217,16 +253,21 @@ class PlayerController:
                 json.dump(data, f, indent=2)
                 
             self.last_save_time = current_time
-            logging.info(f"Progress saved for player {self.current_player.name}")
+            self.logger.info(f"Progress saved for player {self.current_player.name}")
             return True
             
         except Exception as e:
-            logging.error(f"Error saving progress: {str(e)}")
+            self.logger.error(f"Error saving progress: {str(e)}")
             return False
 
     def _create_default_data(self) -> None:
         """Create default player data file"""
-        default_data = {
+        try:
+            # Ensure data directory exists and is writable
+            os.makedirs(self.data_dir, exist_ok=True)
+
+            # Create default data
+            default_data = {
             "version": "1.0",
             "last_updated": datetime.now().isoformat(),
             "players": [
@@ -272,13 +313,12 @@ class PlayerController:
                 }
             ]
         }
-
-        try:
             with open(self.data_file, 'w') as f:
                 json.dump(default_data, f, indent=2)
-            logging.info("Created default player data file")
+                # self.logger.info("Created default player data file")
+            os.chmod(self.data_file, 0o644)
         except Exception as e:
-            logging.error(f"Error creating default data: {str(e)}")
+            self.logger.error(f"Error creating default data: {str(e)}")
 
     def create_player(self, name: str) -> Optional[Player]:
         """Create a new player"""
@@ -309,8 +349,20 @@ class PlayerController:
             return None
 
     def _player_exists(self, name: str) -> bool:
-        """Check if player name already exists"""
-        return name in self.load_players()
+        """Check if player name exists with improved validation"""
+        try:
+            with open(self.data_file, 'r') as f:
+                data = json.load(f)
+
+            if not self._validate_player_data(data):
+                self.logger.error("Invalid data structure detected during player existence check")
+                return False
+
+            return any(p["name"] == name for p in data["players"])
+
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            self.logger.error(f"Error checking player existence: {str(e)}")
+            return False
 
     def _update_last_active(self) -> None:
         """Update last active timestamp for current player"""
@@ -413,34 +465,76 @@ class PlayerController:
         }
 
     def delete_player(self, name: str) -> bool:
-        """Delete a player from the system"""
-        # Protect the default player to ensure JSON file is never empty
+        """Delete a player from the system with improved validation and cleanup"""
+        # Protect the default player
         if name == "Mr. Jones":
-            logging.warning(f"Attempted to delete protected default player {name}")
+            self.logger.warning(f"Attempted to delete protected default player {name}")
             return False
 
         try:
+            # Validate player exists before attempting deletion
+            if not self._player_exists(name):
+                self.logger.warning(f"Attempted to delete non-existent player {name}")
+                return False
+
             with open(self.data_file, 'r') as f:
                 data = json.load(f)
 
+            # Verify data structure before modification
+            if not self._validate_player_data(data):
+                self.logger.error("Invalid data structure detected before deletion")
+                return False
+
             # Create backup before modification
-            self._create_backup()
+            if not self._create_backup():
+                self.logger.error("Failed to create backup before player deletion")
+                return False
+
+            # Store initial player count
+            initial_count = len(data["players"])
 
             # Remove player
             data["players"] = [p for p in data["players"] if p["name"] != name]
+
+            # Verify one player was removed
+            if len(data["players"]) != initial_count - 1:
+                self.logger.error(
+                    f"Unexpected player count after deletion: expected {initial_count - 1}, got {len(data['players'])}")
+                return False
+
+            # Update timestamp
             data["last_updated"] = datetime.now().isoformat()
+
+            # Validate modified data
+            if not self._validate_player_data(data):
+                self.logger.error("Invalid data structure detected after deletion")
+                return False
 
             # Save updated data
             with open(self.data_file, 'w') as f:
                 json.dump(data, f, indent=2)
 
+            # Clear current player if deleted
             if self.current_player and self.current_player.name == name:
                 self.current_player = None
+                self.logger.info(f"Cleared current player after deletion of {name}")
 
+            # Remove any backup files specific to this player
+            try:
+                backup_pattern = f"*{name}*.json"
+                for backup_file in self.backup_dir.glob(backup_pattern):
+                    backup_file.unlink()
+            except Exception as e:
+                self.logger.warning(f"Error cleaning up backup files for {name}: {str(e)}")
+
+            self.logger.info(f"Successfully deleted player {name}")
             return True
 
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            logging.error(f"Error deleting player: {str(e)}")
+            self.logger.error(f"Error during player deletion: {str(e)}")
+            return False
+        except Exception as e:
+            self.logger.error(f"Unexpected error during player deletion: {str(e)}")
             return False
 
     def select_player(self, name: str) -> Optional[Player]:
@@ -450,7 +544,7 @@ class PlayerController:
                 data = json.load(f)
 
             if not self._validate_player_data(data):
-                logging.error("Data validation failed during player selection")
+                self.logger.error("Data validation failed during player selection")
                 return None
 
             for player_data in data["players"]:
@@ -463,17 +557,17 @@ class PlayerController:
 
                         self.current_player = Player.from_dict(player_data)
                         self._update_last_active()
-                        logging.info(f"Player {name} selected successfully")
+                        self.logger.info(f"Player {name} selected successfully")
                         return self.current_player
                     except Exception as e:
-                        logging.error(f"Error creating player object: {str(e)}")
+                        self.logger.error(f"Error creating player object: {str(e)}")
                         return None
 
-            logging.warning(f"Player {name} not found")
+            self.logger.warning(f"Player {name} not found")
             return None
 
         except Exception as e:
-            logging.error(f"Error selecting player: {str(e)}")
+            self.logger.error(f"Error selecting player: {str(e)}")
             return None
             
     def _update_last_active(self) -> None:
@@ -494,7 +588,7 @@ class PlayerController:
                     break
                     
             if not updated:
-                logging.warning(f"Player {self.current_player.name} not found during last_active update")
+                self.logger.warning(f"Player {self.current_player.name} not found during last_active update")
                 return
                     
             data["last_updated"] = datetime.now().isoformat()
@@ -503,7 +597,7 @@ class PlayerController:
             with open(self.data_file, 'w') as f:
                 json.dump(data, f, indent=2)
                 
-            logging.info(f"Last active timestamp updated for {self.current_player.name}")
+            self.logger.info(f"Last active timestamp updated for {self.current_player.name}")
                 
         except Exception as e:
-            logging.error(f"Error updating last active: {str(e)}")
+            self.logger.error(f"Error updating last active: {str(e)}")

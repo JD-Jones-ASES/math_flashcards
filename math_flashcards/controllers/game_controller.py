@@ -1,3 +1,6 @@
+import os
+import sys
+import pathlib
 import pygame
 from typing import Optional, Dict, Any, Tuple
 from enum import Enum
@@ -23,7 +26,12 @@ class GameController:
         """Initialize the game controller"""
         self.width = width
         self.height = height
-        
+
+        if getattr(sys, 'frozen', False):
+            base_dir = pathlib.Path(sys._MEIPASS)
+        else:
+            base_dir = pathlib.Path(__file__).parent.parent
+
         # Initialize pygame first
         pygame.init()
         
@@ -33,8 +41,13 @@ class GameController:
         self.layout.WINDOW_HEIGHT = height
 
         # Load Icon
-        icon = pygame.image.load('data/icon.jpg')
+        icon_path = base_dir / "data" / "icon.jpg"
+        icon = pygame.image.load(str(icon_path))
         pygame.display.set_icon(icon)
+
+        # # Load Icon
+        # icon = pygame.image.load('data/icon.jpg')
+        # pygame.display.set_icon(icon)
 
         # Set up initial window
         pygame.display.set_caption('Math Flash Cards @ All Saints')
