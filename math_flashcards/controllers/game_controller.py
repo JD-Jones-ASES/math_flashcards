@@ -31,7 +31,11 @@ class GameController:
         self.layout = Layout()
         self.layout.WINDOW_WIDTH = width
         self.layout.WINDOW_HEIGHT = height
-        
+
+        # Load Icon
+        icon = pygame.image.load('data/icon.jpg')
+        pygame.display.set_icon(icon)
+
         # Set up initial window
         pygame.display.set_caption('Math Flash Cards @ All Saints')
         self.screen = pygame.display.set_mode(
