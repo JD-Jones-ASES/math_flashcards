@@ -1,14 +1,15 @@
 from typing import Dict, Optional, Tuple, Any
 import pygame
 import random
+import math
+from datetime import datetime
 from math_flashcards.utils.constants import Colors, Layout, DifficultyLevel, GameSettings
 from math_flashcards.models.player import Player
 from math_flashcards.views.login_dialog import LoginDialog
 from math_flashcards.views.ui_components import Button, ListItem, StatsPanel
-import math
 from math_flashcards.utils.version import (
     VERSION, APP_NAME, APP_AUTHOR, APP_COPYRIGHT,
-    APP_LICENSE, APP_REPOSITORY
+    APP_LICENSE, APP_REPOSITORY, VERSION
 )
 
 class GameWindow:
@@ -681,90 +682,133 @@ class GameWindow:
                 text_surface = self.fonts['normal'].render(text, True, text_color)
                 self.screen.blit(text_surface,
                                  text_surface.get_rect(center=box_rect.center))
+
     def _draw_about_panel(self) -> None:
         """Draw the about/info panel with game information"""
         if not self.game_session:
             return
 
-        # Create semi-transparent overlay
+        # Create semi-transparent overlay with blur effect
         overlay = pygame.Surface((self.layout.WINDOW_WIDTH, self.layout.WINDOW_HEIGHT))
         overlay.fill((0, 0, 0))
         overlay.set_alpha(160)
         self.screen.blit(overlay, (0, 0))
 
-        # Calculate panel dimensions
-        panel_width = min(600, self.layout.WINDOW_WIDTH - 100)
-        panel_height = min(500, self.layout.WINDOW_HEIGHT - 100)
+        # Calculate panel dimensions with golden ratio
+        panel_width = min(680, self.layout.WINDOW_WIDTH - 50)
+        panel_height = max(int(panel_width / 1.618), self.layout.WINDOW_HEIGHT - 50)
         panel_x = (self.layout.WINDOW_WIDTH - panel_width) // 2
         panel_y = (self.layout.WINDOW_HEIGHT - panel_height) // 2
 
-        # Draw panel background
+        # Draw panel background with enhanced styling
         panel_rect = pygame.Rect(panel_x, panel_y, panel_width, panel_height)
-        pygame.draw.rect(self.screen, Colors.WHITE, panel_rect)
-        pygame.draw.rect(self.screen, Colors.BORDER_GRAY, panel_rect, 2)
 
-        # Draw header
-        header_height = 40
+        # Draw shadow
+        shadow_offset = 4
+        shadow_rect = panel_rect.copy()
+        shadow_rect.x += shadow_offset
+        shadow_rect.y += shadow_offset
+        pygame.draw.rect(self.screen, Colors.NAVY_DARKEST, shadow_rect, border_radius=12)
+
+        # Main panel
+        pygame.draw.rect(self.screen, Colors.WHITE, panel_rect, border_radius=12)
+
+        # Gradient header
+        header_height = 50
         header_rect = pygame.Rect(panel_x, panel_y, panel_width, header_height)
-        pygame.draw.rect(self.screen, (65, 135, 255), header_rect)  # Match info button color
+        header_surface = pygame.Surface((panel_width, header_height), pygame.SRCALPHA)
 
-        header_text = self.fonts['normal'].render("About Math Flash Cards", True, Colors.WHITE)
-        self.screen.blit(header_text, (
-            panel_x + 15,
-            panel_y + (header_height - header_text.get_height()) // 2
-        ))
+        for y in range(header_height):
+            progress = y / header_height
+            color = self._lerp_color(Colors.NAVY_PRIMARY, Colors.NAVY_LIGHT, progress)
+            pygame.draw.line(header_surface, color, (0, y), (panel_width, y))
 
-        # Content area
-        content_x = panel_x + 20
-        content_y = panel_y + header_height + 20
-        line_height = 30
+        self.screen.blit(header_surface, header_rect)
 
-        # About content
-        about_text = [
-            (APP_NAME, Colors.BLACK, 'normal'),
-            (f"Version {VERSION}", Colors.TEXT_GRAY, 'small'),
-            ("", None, None),  # Spacer
-            ("An interactive math practice application featuring:", Colors.BLACK, 'small'),
-            ("• Adaptive Learning", Colors.TEXT_GRAY, 'small'),
-            ("• Multiple Operation Types", Colors.TEXT_GRAY, 'small'),
-            ("• Custom Difficulty Modes", Colors.TEXT_GRAY, 'small'),
-            ("• Progress Tracking", Colors.TEXT_GRAY, 'small'),
-            ("", None, None),  # Spacer
-            (f"Created by {APP_AUTHOR}", Colors.BLACK, 'small'),
-            (f"100% Open Source", Colors.INTRO_MODE, 'small'),
-            (f"{APP_LICENSE} License", Colors.TEXT_GRAY, 'small'),
-            ("", None, None),  # Spacer
-            (APP_COPYRIGHT, Colors.TEXT_GRAY, 'small'),
-            ("", None, None),  # Spacer
-            ("Click anywhere outside this panel to close", Colors.TEXT_GRAY, 'small')
+        # Header text with glow effect
+        header_text = self.fonts['normal'].render(APP_NAME, True, Colors.WHITE)
+        text_rect = header_text.get_rect(
+            centerx=header_rect.centerx,
+            centery=header_rect.centery
+        )
+
+        # Draw text glow
+        glow_surface = pygame.Surface((header_text.get_width() + 4, header_text.get_height() + 4), pygame.SRCALPHA)
+        glow_text = self.fonts['normal'].render(APP_NAME, True, (*Colors.NAVY_LIGHTEST, 128))
+        glow_rect = glow_text.get_rect(center=(glow_surface.get_width() // 2, glow_surface.get_height() // 2))
+        glow_surface.blit(glow_text, glow_rect)
+        self.screen.blit(glow_surface, text_rect)
+        self.screen.blit(header_text, text_rect)
+
+        # Content area with sections
+        content_x = panel_x + 30
+        content_y = panel_y + header_height + 25
+        line_height = 28
+        section_spacing = 20
+
+        # Define sections
+        sections = [
+            {
+                'title': 'Version Information',
+                'content': [
+                    (f"Version {VERSION}", Colors.NAVY_PRIMARY)
+                ]
+            },
+            {
+                'title': 'Features',
+                'content': [
+                    ("• Adaptive Learning System", Colors.TEXT_GRAY),
+                    ("• Multiple Operation Types", Colors.TEXT_GRAY),
+                    ("• Custom Difficulty Modes", Colors.TEXT_GRAY),
+                    ("• Detailed Progress Tracking", Colors.TEXT_GRAY),
+                    ("• Multi-User Support", Colors.TEXT_GRAY)
+                ]
+            },
+            {
+                'title': 'Credits',
+                'content': [
+                    (f"Created by {APP_AUTHOR}", Colors.BLACK),
+                    (f"{APP_LICENSE} License", Colors.HIGHLIGHT),
+                    (APP_COPYRIGHT, Colors.TEXT_GRAY),
+                    (f"Repository: {APP_REPOSITORY}", Colors.TEXT_GRAY)
+                ]
+            }
         ]
 
-        # # About content
-        # about_text = [
-        #     ("Math Flash Cards", Colors.BLACK, 'normal'),
-        #     ("Version 0.8.0-beta+1", Colors.TEXT_GRAY, 'small'),
-        #     ("", None, None),  # Spacer
-        #     ("An interactive math practice application featuring:", Colors.BLACK, 'small'),
-        #     ("• Adaptive Learning", Colors.TEXT_GRAY, 'small'),
-        #     ("• Multiple Operation Types", Colors.TEXT_GRAY, 'small'),
-        #     ("• Custom Difficulty Modes", Colors.TEXT_GRAY, 'small'),
-        #     ("• Detailed Analytics", Colors.TEXT_GRAY, 'small'),
-        #     ("• Progress Tracking", Colors.TEXT_GRAY, 'small'),
-        #     ("", None, None),  # Spacer
-        #     ("Created by JD Jones", Colors.BLACK, 'small'),
-        #     ("MIT Open Source", Colors.TEXT_GRAY, 'small'),
-        #     ("", None, None),  # Spacer
-        #     ("Click anywhere outside this panel to close", Colors.TEXT_GRAY, 'small')
-        # ]
+        # Draw sections
+        for section in sections:
+            # Section title with underline
+            title_surface = self.fonts['normal'].render(section['title'], True, Colors.NAVY_PRIMARY)
+            self.screen.blit(title_surface, (content_x, content_y))
 
-        for line in about_text:
-            if line[1] is None:  # Spacer
-                content_y += line_height // 2
-                continue
+            # Animated underline
+            line_progress = (math.sin(pygame.time.get_ticks() / 1000) + 1) / 2
+            line_width = int(title_surface.get_width() * line_progress)
+            line_y = content_y + title_surface.get_height() + 2
+            pygame.draw.line(self.screen, Colors.HIGHLIGHT,
+                             (content_x, line_y),
+                             (content_x + line_width, line_y), 2)
 
-            text_surface = self.fonts[line[2]].render(line[0], True, line[1])
-            self.screen.blit(text_surface, (content_x, content_y))
-            content_y += line_height
+            content_y += title_surface.get_height() + 10
+
+            # Section content
+            for item in section['content']:
+                if item:  # Skip None entries
+                    text, color = item
+                    text_surface = self.fonts['small'].render(text, True, color)
+                    self.screen.blit(text_surface, (content_x + 10, content_y))
+                    content_y += line_height
+
+            content_y += section_spacing
+
+        # Draw footer
+        footer_text = "Click anywhere outside this panel to close"
+        footer_surface = self.fonts['small'].render(footer_text, True, Colors.TEXT_GRAY)
+        footer_rect = footer_surface.get_rect(
+            centerx=panel_rect.centerx,
+            bottom=panel_rect.bottom - 15
+        )
+        self.screen.blit(footer_surface, footer_rect)
 
     def _draw_admin_panel(self) -> None:
         """Draw the admin panel with player management"""
