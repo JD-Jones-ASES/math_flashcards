@@ -205,63 +205,173 @@ class LoginDialog:
         self.player_list.update_hover(mouse_pos)
 
     def draw(self) -> None:
-        """Draw the login dialog"""
+        """Draw the login dialog with enhanced styling"""
         # Store or restore background
         if not self.stored_background:
             self.background = self.screen.copy()
             self.stored_background = True
         else:
             self.screen.blit(self.background, (0, 0))
-        
-        # Draw dark overlay
+
+        # Draw dark overlay with blur effect
         overlay = pygame.Surface((self.layout.WINDOW_WIDTH, self.layout.WINDOW_HEIGHT))
         overlay.fill((0, 0, 0))
         overlay.set_alpha(160)
         self.screen.blit(overlay, (0, 0))
-        
-        # Draw dialog box
-        pygame.draw.rect(self.screen, Colors.WHITE, self.dialog_rect, border_radius=8)
-        pygame.draw.rect(self.screen, Colors.BORDER_GRAY, self.dialog_rect, 2, border_radius=8)
-        
-        # Draw title
-        title = self.fonts['normal'].render(
-            "Welcome to Math Flash Cards!", True, Colors.BLACK
+
+        # Draw dialog box with shadow
+        shadow_offset = 4
+        shadow_rect = self.dialog_rect.copy()
+        shadow_rect.x += shadow_offset
+        shadow_rect.y += shadow_offset
+        pygame.draw.rect(self.screen, Colors.NAVY_DARKEST, shadow_rect, border_radius=12)
+
+        # Main panel with subtle gradient
+        dialog_surface = pygame.Surface((self.dialog_rect.width, self.dialog_rect.height), pygame.SRCALPHA)
+        for y in range(self.dialog_rect.height):
+            progress = y / self.dialog_rect.height
+            color = self._lerp_color(
+                (250, 252, 255, 255),  # Very light blue-white at top
+                (240, 245, 255, 255),  # Slightly more blue at bottom
+                progress
+            )
+            pygame.draw.line(dialog_surface, color, (0, y), (self.dialog_rect.width, y))
+
+        self.screen.blit(dialog_surface, self.dialog_rect)
+        pygame.draw.rect(self.screen, Colors.BORDER_GRAY, self.dialog_rect, 2, border_radius=12)
+
+        # Draw title with gradient header
+        header_height = 50
+        header_rect = pygame.Rect(
+            self.dialog_rect.x,
+            self.dialog_rect.y,
+            self.dialog_rect.width,
+            header_height
         )
-        title_rect = title.get_rect(
+        header_surface = pygame.Surface((header_rect.width, header_height), pygame.SRCALPHA)
+
+        for y in range(header_height):
+            progress = y / header_height
+            color = self._lerp_color(Colors.NAVY_PRIMARY, Colors.NAVY_LIGHT, progress)
+            pygame.draw.line(header_surface, color, (0, y), (header_rect.width, y))
+
+        self.screen.blit(header_surface, header_rect)
+
+        # Draw title text with glow
+        title = "Welcome to Math Flash Cards!"
+        title_text = self.fonts['normal'].render(title, True, Colors.WHITE)
+        title_rect = title_text.get_rect(
             centerx=self.dialog_rect.centerx,
-            top=self.dialog_rect.top + 10
+            centery=header_rect.centery
         )
-        self.screen.blit(title, title_rect)
-        
-        # Draw new player section
-        instruction = self.fonts['small'].render(
-            "New player? Type your name and click Create:", True, Colors.TEXT_GRAY
-        )
-        instruction_rect = instruction.get_rect(
-            centerx=self.dialog_rect.centerx,
-            bottom=self.name_input.rect.top - 10
-        )
-        self.screen.blit(instruction, instruction_rect)
-        
-        # Draw input field
+
+        # Add glow effect
+        glow_surface = pygame.Surface((title_text.get_width() + 4, title_text.get_height() + 4), pygame.SRCALPHA)
+        glow_text = self.fonts['normal'].render(title, True, (*Colors.NAVY_LIGHTEST, 128))
+        glow_rect = glow_text.get_rect(center=(glow_surface.get_width() // 2, glow_surface.get_height() // 2))
+        glow_surface.blit(glow_text, glow_rect)
+        self.screen.blit(glow_surface, title_rect)
+        self.screen.blit(title_text, title_rect)
+
+        # Draw input field with enhanced styling
         self.name_input.draw(self.screen, self.fonts['normal'])
-        
-        # Draw create button
+
+        # Draw create button (already styled nicely)
         self.new_player_button.draw(self.screen, self.fonts['normal'])
-        
-        # Draw returning player section
+
+        # Draw player list section with enhanced styling
         returning_text = self.fonts['small'].render(
-            "Player List:", True, Colors.TEXT_GRAY
+            "Player List:", True, Colors.NAVY_PRIMARY
         )
         returning_rect = returning_text.get_rect(
             centerx=self.dialog_rect.centerx,
             bottom=self.player_list.rect.top - 10
         )
         self.screen.blit(returning_text, returning_rect)
-        
-        # Draw player list
+
+        # Draw enhanced player list
         self.player_list.draw(self.screen, self.fonts['normal'])
-        
+
         # Update display
         pygame.display.flip()
-	
+
+    def _lerp_color(self, color1: tuple, color2: tuple, progress: float) -> tuple:
+        """Linearly interpolate between two colors"""
+        return tuple(
+            int(c1 + (c2 - c1) * progress)
+            for c1, c2 in zip(color1, color2)
+        )
+
+
+class PlayerInput:
+    """Input field for player name with validation"""
+
+    def __init__(self, rect: pygame.Rect):
+        self.rect = rect
+        self.text = ""
+        self.cursor_visible = True
+        self.cursor_timer = 0
+        self.active = True
+        self.max_length = 20
+        self.error_message = ""
+        self.error_timer = 0
+
+        # Create validation rules
+        self.invalid_chars = set('<>:"/\\|?*')
+
+    def update(self, current_time: int) -> None:
+        """Update animation states"""
+        # Update cursor blink
+        if current_time - self.cursor_timer > GameSettings.ANIMATION['cursor_blink_time']:
+            self.cursor_visible = not self.cursor_visible
+            self.cursor_timer = current_time
+
+        # Clear error message after delay
+        if (self.error_message and
+                current_time - self.error_timer > GameSettings.ANIMATION['feedback_duration']):
+            self.error_message = ""
+
+    def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
+        """Draw the input field with modern styling"""
+        # Draw input box with shadow
+        shadow_rect = self.rect.copy()
+        shadow_rect.y += 2
+        pygame.draw.rect(surface, Colors.NAVY_DARKEST, shadow_rect, border_radius=10)
+
+        # Draw main box
+        pygame.draw.rect(surface, Colors.WHITE, self.rect, border_radius=10)
+
+        # Draw glossy highlight on top half
+        highlight_rect = self.rect.copy()
+        highlight_rect.height = self.rect.height // 2
+        highlight_surface = pygame.Surface(highlight_rect.size, pygame.SRCALPHA)
+        pygame.draw.rect(highlight_surface, (255, 255, 255, 25),
+                         highlight_surface.get_rect(), border_radius=10)
+        surface.blit(highlight_surface, highlight_rect)
+
+        # Draw border with glow effect if active
+        border_color = Colors.HIGHLIGHT if self.active else Colors.BORDER_GRAY
+        if self.active:
+            # Draw outer glow
+            for offset in range(3):
+                glow_rect = self.rect.inflate(offset * 2, offset * 2)
+                pygame.draw.rect(surface, (*Colors.NAVY_LIGHTEST, 30),
+                                 glow_rect, border_radius=10, width=1)
+
+        pygame.draw.rect(surface, border_color, self.rect, 2, border_radius=10)
+
+        # Draw text
+        display_text = self.text
+        if self.active and self.cursor_visible:
+            display_text += "|"
+
+        if display_text:
+            text_surface = font.render(display_text, True, Colors.NAVY_PRIMARY)
+            text_rect = text_surface.get_rect(center=self.rect.center)
+            surface.blit(text_surface, text_rect)
+
+        # Draw error message if any
+        if self.error_message:
+            error_surface = font.render(self.error_message, True, Colors.ERROR)
+            error_pos = (self.rect.centerx, self.rect.bottom + 20)
+            surface.blit(error_surface, error_surface.get_rect(center=error_pos))

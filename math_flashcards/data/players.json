@@ -1,39 +1,39 @@
 {
   "version": "1.0",
-  "last_updated": "2024-11-04T03:12:27.110446",
+  "last_updated": "2024-11-02T13:07:56.900446",
   "players": [
     {
       "name": "Mr. Jones",
       "creation_date": "2024-11-02T08:36:06.335741",
-      "last_active": "2024-11-04T03:12:12.295289",
-      "total_problems_attempted": 41,
-      "total_correct": 41,
-      "current_streak": 41,
-      "best_streak": 41,
-      "time_spent_mins": 2.548379945755005,
+      "last_active": "2024-11-02T13:07:54.511586",
+      "total_problems_attempted": 27,
+      "total_correct": 27,
+      "current_streak": 27,
+      "best_streak": 27,
+      "time_spent_mins": 1.257493535677592,
       "operation_stats": {
         "+": {
-          "problems_attempted": 16,
-          "correct": 16,
-          "avg_response_time_ms": 5853.810131549835,
+          "problems_attempted": 5,
+          "correct": 5,
+          "avg_response_time_ms": 4664.894533157349,
           "accuracy": 100.0,
           "fact_mastery": {
-            "+_1": 0.09653844451904296,
-            "+_2": 0.1920773048400879,
-            "+_3": 0.52357594871521,
+            "+_1": 0.08653844451904297,
+            "+_2": 0.0,
+            "+_3": 0.06,
             "+_4": 0.0,
             "+_5": 0.0,
-            "+_6": 0.03610494422912598,
+            "+_6": 0.08610494422912598,
             "+_7": 0.0,
             "+_8": 0.0,
             "+_9": 0.0,
             "+_10": 0.0,
             "+_11": 0.0,
             "+_12": 0.0,
-            "+_27": 0.009999999999999995,
-            "+_47": 0.009999999999999995
+            "+_27": 0.06,
+            "+_47": 0.06
           },
-          "last_practiced": "2024-11-04T03:12:05.178326"
+          "last_practiced": "2024-11-02T13:07:39.937441"
         },
         "-": {
           "problems_attempted": 2,
@@ -57,16 +57,16 @@
           "last_practiced": "2024-11-02T13:07:20.757809"
         },
         "*": {
-          "problems_attempted": 12,
-          "correct": 12,
-          "avg_response_time_ms": 2359.1357270876565,
+          "problems_attempted": 10,
+          "correct": 10,
+          "avg_response_time_ms": 2281.6617488861084,
           "accuracy": 100.0,
           "fact_mastery": {
-            "*_1": 0.1868604907989502,
-            "*_2": 0.47783582305908207,
-            "*_3": 0.03908730888366699,
+            "*_1": 0.17144900131225588,
+            "*_2": 0.43719140243530275,
+            "*_3": 0.08908730888366699,
             "*_4": 0.0,
-            "*_5": 0.04068794631958009,
+            "*_5": 0.09068794631958009,
             "*_6": 0.0,
             "*_7": 0.0,
             "*_8": 0.0,
@@ -74,39 +74,39 @@
             "*_10": 0.0,
             "*_11": 0.0,
             "*_12": 0.0,
-            "*_18": 0.009999999999999995
+            "*_18": 0.06
           },
-          "last_practiced": "2024-11-04T03:12:10.671510"
+          "last_practiced": "2024-11-02T13:07:51.033468"
         },
         "/": {
-          "problems_attempted": 11,
-          "correct": 11,
-          "avg_response_time_ms": 2370.783350684426,
+          "problems_attempted": 10,
+          "correct": 10,
+          "avg_response_time_ms": 2445.4932928085327,
           "accuracy": 100.0,
           "fact_mastery": {
-            "/_1": 0.03192009735107422,
+            "/_1": 0.08192009735107422,
             "/_2": 0.0,
             "/_3": 0.0,
-            "/_4": 0.1296152744293213,
-            "/_5": 0.08701052856445313,
-            "/_6": 0.030869995117187507,
-            "/_7": 0.3483676700592041,
+            "/_4": 0.1796152744293213,
+            "/_5": 0.0,
+            "/_6": 0.08086999511718751,
+            "/_7": 0.3983676700592041,
             "/_8": 0.0,
-            "/_9": 0.02217630767822265,
+            "/_9": 0.07217630767822265,
             "/_10": 0.0,
             "/_11": 0.0,
             "/_12": 0.0
           },
-          "last_practiced": "2024-11-04T03:12:12.295279"
+          "last_practiced": "2024-11-02T13:07:54.511575"
         }
       },
       "difficulty_stats": {
         "Intro": {
-          "problems_attempted": 35,
-          "correct": 35,
-          "avg_response_time_ms": 3453.911910738264,
+          "problems_attempted": 21,
+          "correct": 21,
+          "avg_response_time_ms": 2068.2729652949743,
           "accuracy": 100.0,
-          "last_played": "2024-11-04T03:12:12.295281"
+          "last_played": "2024-11-02T13:07:22.494766"
         },
         "Basic": {
           "problems_attempted": 0,
@@ -139,11 +139,11 @@
       },
       "achievement_stats": {
         "perfect_sessions": 17,
-        "problems_solved_under_3s": 24,
-        "longest_streak": 41,
-        "total_practice_days": 2,
+        "problems_solved_under_3s": 19,
+        "longest_streak": 27,
+        "total_practice_days": 1,
         "consecutive_days_streak": 1,
-        "last_practice_date": "2024-11-04"
+        "last_practice_date": "2024-11-02"
       },
       "recent_sessions": [
         {
@@ -152,221 +152,16 @@
           "problems_attempted": 27,
           "correct": 27,
           "operations_used": [
-            "*",
-            "+",
             "-",
-            "/"
+            "/",
+            "+",
+            "*"
           ],
           "difficulty_levels": [
-            "Intro",
-            "Custom"
+            "Custom",
+            "Intro"
           ],
           "avg_response_time_ms": 2794.430079283538
-        },
-        {
-          "date": "2024-11-04",
-          "duration_mins": 0.12168866793314616,
-          "problems_attempted": 1,
-          "correct": 1,
-          "operations_used": [
-            "+"
-          ],
-          "difficulty_levels": [
-            "Intro"
-          ],
-          "avg_response_time_ms": 7301.214933395386
-        },
-        {
-          "date": "2024-11-04",
-          "duration_mins": 0.3044347723325094,
-          "problems_attempted": 3,
-          "correct": 3,
-          "operations_used": [
-            "+"
-          ],
-          "difficulty_levels": [
-            "Intro"
-          ],
-          "avg_response_time_ms": 6088.587522506714
-        },
-        {
-          "date": "2024-11-04",
-          "duration_mins": 0.34492077032725016,
-          "problems_attempted": 6,
-          "correct": 6,
-          "operations_used": [
-            "+"
-          ],
-          "difficulty_levels": [
-            "Intro"
-          ],
-          "avg_response_time_ms": 3449.1263230641684
-        },
-        {
-          "date": "2024-11-04",
-          "duration_mins": 0.0,
-          "problems_attempted": 0,
-          "correct": 0,
-          "operations_used": [],
-          "difficulty_levels": [],
-          "avg_response_time_ms": 0.0
-        },
-        {
-          "date": "2024-11-04",
-          "duration_mins": 0.0,
-          "problems_attempted": 0,
-          "correct": 0,
-          "operations_used": [],
-          "difficulty_levels": [],
-          "avg_response_time_ms": 0.0
-        },
-        {
-          "date": "2024-11-04",
-          "duration_mins": 0.0,
-          "problems_attempted": 0,
-          "correct": 0,
-          "operations_used": [],
-          "difficulty_levels": [],
-          "avg_response_time_ms": 0.0
-        },
-        {
-          "date": "2024-11-04",
-          "duration_mins": 0.0,
-          "problems_attempted": 0,
-          "correct": 0,
-          "operations_used": [],
-          "difficulty_levels": [],
-          "avg_response_time_ms": 0.0
-        },
-        {
-          "date": "2024-11-04",
-          "duration_mins": 0.0,
-          "problems_attempted": 0,
-          "correct": 0,
-          "operations_used": [],
-          "difficulty_levels": [],
-          "avg_response_time_ms": 0.0
-        },
-        {
-          "date": "2024-11-04",
-          "duration_mins": 0.5198638161023458,
-          "problems_attempted": 4,
-          "correct": 4,
-          "operations_used": [
-            "*",
-            "+",
-            "/"
-          ],
-          "difficulty_levels": [
-            "Intro"
-          ],
-          "avg_response_time_ms": 7797.86229133606
-        }
-      ]
-    },
-    {
-      "name": "PNut",
-      "creation_date": "2024-11-04T03:11:09.175299",
-      "last_active": "2024-11-04T03:11:11.009231",
-      "total_problems_attempted": 1,
-      "total_correct": 1,
-      "current_streak": 1,
-      "best_streak": 1,
-      "time_spent_mins": 0.030530691146850586,
-      "operation_stats": {
-        "+": {
-          "problems_attempted": 1,
-          "correct": 1,
-          "avg_response_time_ms": 1831.8414688110352,
-          "accuracy": 100.0,
-          "fact_mastery": {
-            "+_1": 0.08534526824951172
-          },
-          "last_practiced": "2024-11-04T03:11:11.009216"
-        },
-        "-": {
-          "problems_attempted": 0,
-          "correct": 0,
-          "avg_response_time_ms": 0.0,
-          "accuracy": 0.0,
-          "fact_mastery": {},
-          "last_practiced": null
-        },
-        "*": {
-          "problems_attempted": 0,
-          "correct": 0,
-          "avg_response_time_ms": 0.0,
-          "accuracy": 0.0,
-          "fact_mastery": {},
-          "last_practiced": null
-        },
-        "/": {
-          "problems_attempted": 0,
-          "correct": 0,
-          "avg_response_time_ms": 0.0,
-          "accuracy": 0.0,
-          "fact_mastery": {},
-          "last_practiced": null
-        }
-      },
-      "difficulty_stats": {
-        "Intro": {
-          "problems_attempted": 1,
-          "correct": 1,
-          "avg_response_time_ms": 1831.8414688110352,
-          "accuracy": 100.0,
-          "last_played": "2024-11-04T03:11:11.009221"
-        },
-        "Basic": {
-          "problems_attempted": 0,
-          "correct": 0,
-          "avg_response_time_ms": 0.0,
-          "accuracy": 0.0,
-          "last_played": null
-        },
-        "Medium": {
-          "problems_attempted": 0,
-          "correct": 0,
-          "avg_response_time_ms": 0.0,
-          "accuracy": 0.0,
-          "last_played": null
-        },
-        "Hard": {
-          "problems_attempted": 0,
-          "correct": 0,
-          "avg_response_time_ms": 0.0,
-          "accuracy": 0.0,
-          "last_played": null
-        },
-        "Custom": {
-          "problems_attempted": 0,
-          "correct": 0,
-          "avg_response_time_ms": 0.0,
-          "accuracy": 0.0,
-          "last_played": null
-        }
-      },
-      "achievement_stats": {
-        "perfect_sessions": 0,
-        "problems_solved_under_3s": 1,
-        "longest_streak": 1,
-        "total_practice_days": 1,
-        "consecutive_days_streak": 1,
-        "last_practice_date": "2024-11-04"
-      },
-      "recent_sessions": [
-        {
-          "date": "2024-11-04",
-          "duration_mins": 0.030532697836558025,
-          "problems_attempted": 1,
-          "correct": 1,
-          "operations_used": [
-            "+"
-          ],
-          "difficulty_levels": [
-            "Intro"
-          ],
-          "avg_response_time_ms": 1831.8414688110352
         }
       ]
     }

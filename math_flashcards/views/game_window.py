@@ -811,45 +811,69 @@ class GameWindow:
         self.screen.blit(footer_surface, footer_rect)
 
     def _draw_admin_panel(self) -> None:
-        """Draw the admin panel with player management"""
+        """Draw the admin panel with enhanced styling to match about panel"""
         if not self.game_session:
             return
 
-        # Create semi-transparent overlay
+        # Create semi-transparent overlay with blur effect
         overlay = pygame.Surface((self.layout.WINDOW_WIDTH, self.layout.WINDOW_HEIGHT))
         overlay.fill((0, 0, 0))
         overlay.set_alpha(160)
         self.screen.blit(overlay, (0, 0))
 
-        # Calculate panel dimensions
+        # Calculate panel dimensions with golden ratio
         panel_width = min(600, self.layout.WINDOW_WIDTH - 100)
         panel_height = min(500, self.layout.WINDOW_HEIGHT - 100)
         panel_x = (self.layout.WINDOW_WIDTH - panel_width) // 2
         panel_y = (self.layout.WINDOW_HEIGHT - panel_height) // 2
 
-        # Draw panel background
+        # Draw panel background with enhanced styling
         panel_rect = pygame.Rect(panel_x, panel_y, panel_width, panel_height)
-        pygame.draw.rect(self.screen, Colors.WHITE, panel_rect)
-        pygame.draw.rect(self.screen, Colors.BORDER_GRAY, panel_rect, 2)
 
-        # Draw header
-        header_height = 40
+        # Draw shadow
+        shadow_offset = 4
+        shadow_rect = panel_rect.copy()
+        shadow_rect.x += shadow_offset
+        shadow_rect.y += shadow_offset
+        pygame.draw.rect(self.screen, Colors.NAVY_DARKEST, shadow_rect, border_radius=12)
+
+        # Main panel
+        pygame.draw.rect(self.screen, Colors.WHITE, panel_rect, border_radius=12)
+
+        # Gradient header
+        header_height = 50
         header_rect = pygame.Rect(panel_x, panel_y, panel_width, header_height)
-        pygame.draw.rect(self.screen, Colors.HIGHLIGHT, header_rect)
+        header_surface = pygame.Surface((panel_width, header_height), pygame.SRCALPHA)
 
+        for y in range(header_height):
+            progress = y / header_height
+            color = self._lerp_color(Colors.NAVY_PRIMARY, Colors.NAVY_LIGHT, progress)
+            pygame.draw.line(header_surface, color, (0, y), (panel_width, y))
+
+        self.screen.blit(header_surface, header_rect)
+
+        # Header text with glow effect
         header_text = self.fonts['normal'].render("Player Management", True, Colors.WHITE)
-        self.screen.blit(header_text, (
-            panel_x + 15,
-            panel_y + (header_height - header_text.get_height()) // 2
-        ))
+        text_rect = header_text.get_rect(
+            centerx=header_rect.centerx,
+            centery=header_rect.centery
+        )
+
+        # Draw text glow
+        glow_surface = pygame.Surface((header_text.get_width() + 4, header_text.get_height() + 4), pygame.SRCALPHA)
+        glow_text = self.fonts['normal'].render("Player Management", True, (*Colors.NAVY_LIGHTEST, 128))
+        glow_rect = glow_text.get_rect(center=(glow_surface.get_width() // 2, glow_surface.get_height() // 2))
+        glow_surface.blit(glow_text, glow_rect)
+        self.screen.blit(glow_surface, text_rect)
+        self.screen.blit(header_text, text_rect)
 
         # Calculate content area
-        content_x = panel_x + 15
+        content_x = panel_x + 20
         content_y = panel_y + header_height + 10
-        content_width = panel_width - 30
+        content_width = panel_width - 40
         content_height = panel_height - header_height - 20
 
-        # Draw player list
+        # Draw player list or confirmation dialog
         if self.admin_confirm_delete:
             self._draw_delete_confirmation(
                 content_x, content_y, content_width, content_height
@@ -874,13 +898,13 @@ class GameWindow:
                 self.admin_message = None
 
     def _draw_player_list(self, x: int, y: int, width: int, height: int) -> None:
-        """Draw scrollable player list with delete options"""
+        """Draw scrollable player list with modernized styling and working delete buttons"""
         # Get player list from game session's player controller
         player_controller = self.game_session.player_controller
         players = player_controller.load_players()
 
         # Calculate list metrics
-        item_height = 40
+        item_height = 50  # Increased height for better spacing
         visible_items = height // item_height
         max_scroll = max(0, len(players) - visible_items)
 
@@ -890,35 +914,49 @@ class GameWindow:
             item_y = y + (i * item_height)
             item_rect = pygame.Rect(x, item_y, width, item_height)
 
-            # Draw hover highlight
+            # Draw item background with hover effect
             if self.admin_hover_player == (i + self.admin_scroll_offset):
-                pygame.draw.rect(self.screen, Colors.LIGHT_HIGHLIGHT, item_rect)
+                pygame.draw.rect(self.screen, Colors.LIGHT_HIGHLIGHT, item_rect, border_radius=8)
+            else:
+                pygame.draw.rect(self.screen, Colors.WHITE, item_rect, border_radius=8)
 
-            # Draw player name
-            name_surface = self.fonts['small'].render(player, True, Colors.BLACK)
-            self.screen.blit(name_surface, (x + 10, item_y + 10))
+            # Draw player name with enhanced styling
+            name_surface = self.fonts['normal'].render(player, True, Colors.NAVY_PRIMARY)
+            name_pos = (x + 20, item_y + (item_height - name_surface.get_height()) // 2)
+            self.screen.blit(name_surface, name_pos)
 
             # Draw delete button only for non-protected players
             if player != "Mr. Jones":
+                # CRITICAL: Keep original delete button dimensions and position for click detection
                 delete_rect = pygame.Rect(
-                    x + width - 40,  # Wider clickable area
-                    item_y + (item_height - 30) // 2,  # Centered vertically
-                    30,  # Wider button
-                    30  # Taller button
+                    x + width - 40,  # Maintain original x position for click detection
+                    item_y + (item_height - 30) // 2,
+                    30,  # Original width
+                    30  # Original height
                 )
 
-                # Draw delete button background on hover
+                # Visual button is larger but click detection uses original rect
+                visual_delete_rect = pygame.Rect(
+                    delete_rect.x - 20,  # Wider visual button
+                    delete_rect.y - 3,
+                    70,  # Wider visual button
+                    36  # Taller visual button
+                )
+
+                # Draw delete button with hover effect
                 button_hover = (self.admin_hover_player == (i + self.admin_scroll_offset) and
                                 delete_rect.collidepoint(pygame.mouse.get_pos()))
 
                 if button_hover:
-                    pygame.draw.rect(self.screen, Colors.ERROR, delete_rect, border_radius=15)
-                    delete_text = self.fonts['small'].render("×", True, Colors.WHITE)
+                    pygame.draw.rect(self.screen, Colors.ERROR, visual_delete_rect, border_radius=18)
+                    delete_text = self.fonts['small'].render("Delete", True, Colors.WHITE)
                 else:
-                    delete_text = self.fonts['small'].render("×", True, Colors.ERROR)
+                    pygame.draw.rect(self.screen, Colors.WHITE, visual_delete_rect, border_radius=18)
+                    pygame.draw.rect(self.screen, Colors.ERROR, visual_delete_rect, border_radius=18, width=1)
+                    delete_text = self.fonts['small'].render("Delete", True, Colors.ERROR)
 
-                # Center the × symbol in the button
-                text_rect = delete_text.get_rect(center=delete_rect.center)
+                # Center the text in the visual button
+                text_rect = delete_text.get_rect(center=visual_delete_rect.center)
                 self.screen.blit(delete_text, text_rect)
 
             # Draw separator line
@@ -926,21 +964,22 @@ class GameWindow:
                 pygame.draw.line(
                     self.screen,
                     Colors.BORDER_GRAY,
-                    (x, item_y + item_height),
-                    (x + width, item_y + item_height)
+                    (x + 10, item_y + item_height - 1),
+                    (x + width - 10, item_y + item_height - 1)
                 )
 
         # Draw scroll bar if needed
         if max_scroll > 0:
             scroll_bar_width = 8
             scroll_bar_height = height
-            scroll_bar_x = x + width - scroll_bar_width
+            scroll_bar_x = x + width + 10  # Moved slightly right
 
             # Draw scroll bar background
             pygame.draw.rect(
                 self.screen,
                 Colors.WIN_GRAY,
-                (scroll_bar_x, y, scroll_bar_width, scroll_bar_height)
+                (scroll_bar_x, y, scroll_bar_width, scroll_bar_height),
+                border_radius=4
             )
 
             # Draw scroll bar handle
@@ -948,8 +987,9 @@ class GameWindow:
             handle_pos = (self.admin_scroll_offset / max_scroll) * (scroll_bar_height - handle_height)
             pygame.draw.rect(
                 self.screen,
-                Colors.BORDER_GRAY,
-                (scroll_bar_x, y + handle_pos, scroll_bar_width, handle_height)
+                Colors.NAVY_LIGHT,
+                (scroll_bar_x, y + handle_pos, scroll_bar_width, handle_height),
+                border_radius=4
             )
 
     def _draw_delete_confirmation(self, x: int, y: int, width: int, height: int) -> None:
@@ -993,7 +1033,7 @@ class GameWindow:
     # In game_window.py, replace the _handle_admin_panel_click method:
 
     def _handle_admin_panel_click(self, pos: Tuple[int, int]) -> bool:
-        """Handle clicks in the admin panel"""
+        """Handle clicks in the admin panel - Preserved exactly as original"""
         if self.admin_confirm_delete:
             # Handle confirmation dialog buttons
             for action, rect in self.admin_confirm_buttons.items():
@@ -1022,16 +1062,16 @@ class GameWindow:
                     return True
             return True
 
-        # Rest of the method remains unchanged...
+        # Handle clicks on delete buttons
         panel_width = min(600, self.layout.WINDOW_WIDTH - 100)
         panel_height = min(500, self.layout.WINDOW_HEIGHT - 100)
         panel_x = (self.layout.WINDOW_WIDTH - panel_width) // 2
         panel_y = (self.layout.WINDOW_HEIGHT - panel_height) // 2
 
-        content_x = panel_x + 15
+        content_x = panel_x + 20
         content_y = panel_y + 50  # After header
-        content_width = panel_width - 30
-        item_height = 40
+        content_width = panel_width - 40
+        item_height = 50  # Match the drawing height
 
         # Check for clicks on delete buttons
         players = self.game_session.player_controller.load_players()
@@ -1043,6 +1083,7 @@ class GameWindow:
                 continue
 
             item_y = content_y + (i * item_height)
+            # CRITICAL: Use same delete_rect dimensions as in _draw_player_list
             delete_rect = pygame.Rect(
                 content_x + content_width - 40,
                 item_y + (item_height - 30) // 2,
