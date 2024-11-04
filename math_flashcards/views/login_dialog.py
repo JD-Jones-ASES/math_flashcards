@@ -3,8 +3,10 @@ from typing import Optional, List, Dict, Tuple
 from math_flashcards.utils.constants import Colors, Layout, GameSettings
 from math_flashcards.views.ui_components import Button, ScrollableList
 
+
 class PlayerInput:
     """Input field for player name with validation"""
+
     def __init__(self, rect: pygame.Rect):
         self.rect = rect
         self.text = ""
@@ -14,15 +16,15 @@ class PlayerInput:
         self.max_length = 20
         self.error_message = ""
         self.error_timer = 0
-        
+
         # Create validation rules
         self.invalid_chars = set('<>:"/\\|?*')
-    
+
     def handle_input(self, event: pygame.event.Event) -> None:
         """Handle keyboard input"""
         if not self.active:
             return
-            
+
         if event.key == pygame.K_BACKSPACE:
             self.text = self.text[:-1]
             self.error_message = ""
@@ -34,7 +36,7 @@ class PlayerInput:
                 self.error_message = "Invalid character"
                 self.error_timer = pygame.time.get_ticks()
                 return
-                
+
             if len(self.text) < self.max_length:
                 self.text += event.unicode
                 self.error_message = ""
@@ -45,29 +47,58 @@ class PlayerInput:
         if current_time - self.cursor_timer > GameSettings.ANIMATION['cursor_blink_time']:
             self.cursor_visible = not self.cursor_visible
             self.cursor_timer = current_time
-            
+
         # Clear error message after delay
-        if (self.error_message and 
-            current_time - self.error_timer > GameSettings.ANIMATION['feedback_duration']):
+        if (self.error_message and
+                current_time - self.error_timer > GameSettings.ANIMATION['feedback_duration']):
             self.error_message = ""
 
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
-        """Draw the input field"""
-        # Draw input box
-        box_color = Colors.HIGHLIGHT if self.active else Colors.BORDER_GRAY
-        pygame.draw.rect(surface, Colors.WHITE, self.rect)
-        pygame.draw.rect(surface, box_color, self.rect, 2)
-        
-        # Draw text with cursor
+        """Draw the input field with modern styling"""
+        # Draw input box with shadow
+        shadow_rect = self.rect.copy()
+        shadow_rect.y += 2
+        pygame.draw.rect(surface, Colors.NAVY_DARKEST, shadow_rect, border_radius=10)
+
+        # Draw main box
+        pygame.draw.rect(surface, Colors.WHITE, self.rect, border_radius=10)
+
+        # Draw glossy highlight on top half
+        highlight_rect = self.rect.copy()
+        highlight_rect.height = self.rect.height // 2
+        highlight_surface = pygame.Surface(highlight_rect.size, pygame.SRCALPHA)
+        pygame.draw.rect(highlight_surface, (255, 255, 255, 25),
+                         highlight_surface.get_rect(), border_radius=10)
+        surface.blit(highlight_surface, highlight_rect)
+
+        # Draw border with glow effect if active
+        border_color = Colors.HIGHLIGHT if self.active else Colors.BORDER_GRAY
+        if self.active:
+            # Draw outer glow
+            for offset in range(3):
+                glow_rect = self.rect.inflate(offset * 2, offset * 2)
+                pygame.draw.rect(surface, (*Colors.NAVY_LIGHTEST, 30),
+                                 glow_rect, border_radius=10, width=1)
+
+        pygame.draw.rect(surface, border_color, self.rect, 2, border_radius=10)
+
+        # Draw text
         display_text = self.text
         if self.active and self.cursor_visible:
             display_text += "|"
-        
+
         if display_text:
-            text_surface = font.render(display_text, True, Colors.BLACK)
+            # Add subtle text shadow
+            shadow_surface = font.render(display_text, True, (0, 0, 0, 128))
+            shadow_rect = shadow_surface.get_rect(center=self.rect.center)
+            shadow_rect.y += 1
+            surface.blit(shadow_surface, shadow_rect)
+
+            # Draw main text
+            text_surface = font.render(display_text, True, Colors.NAVY_PRIMARY)
             text_rect = text_surface.get_rect(center=self.rect.center)
             surface.blit(text_surface, text_rect)
-            
+
         # Draw error message if any
         if self.error_message:
             error_surface = font.render(self.error_message, True, Colors.ERROR)
@@ -302,76 +333,3 @@ class LoginDialog:
             for c1, c2 in zip(color1, color2)
         )
 
-
-class PlayerInput:
-    """Input field for player name with validation"""
-
-    def __init__(self, rect: pygame.Rect):
-        self.rect = rect
-        self.text = ""
-        self.cursor_visible = True
-        self.cursor_timer = 0
-        self.active = True
-        self.max_length = 20
-        self.error_message = ""
-        self.error_timer = 0
-
-        # Create validation rules
-        self.invalid_chars = set('<>:"/\\|?*')
-
-    def update(self, current_time: int) -> None:
-        """Update animation states"""
-        # Update cursor blink
-        if current_time - self.cursor_timer > GameSettings.ANIMATION['cursor_blink_time']:
-            self.cursor_visible = not self.cursor_visible
-            self.cursor_timer = current_time
-
-        # Clear error message after delay
-        if (self.error_message and
-                current_time - self.error_timer > GameSettings.ANIMATION['feedback_duration']):
-            self.error_message = ""
-
-    def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
-        """Draw the input field with modern styling"""
-        # Draw input box with shadow
-        shadow_rect = self.rect.copy()
-        shadow_rect.y += 2
-        pygame.draw.rect(surface, Colors.NAVY_DARKEST, shadow_rect, border_radius=10)
-
-        # Draw main box
-        pygame.draw.rect(surface, Colors.WHITE, self.rect, border_radius=10)
-
-        # Draw glossy highlight on top half
-        highlight_rect = self.rect.copy()
-        highlight_rect.height = self.rect.height // 2
-        highlight_surface = pygame.Surface(highlight_rect.size, pygame.SRCALPHA)
-        pygame.draw.rect(highlight_surface, (255, 255, 255, 25),
-                         highlight_surface.get_rect(), border_radius=10)
-        surface.blit(highlight_surface, highlight_rect)
-
-        # Draw border with glow effect if active
-        border_color = Colors.HIGHLIGHT if self.active else Colors.BORDER_GRAY
-        if self.active:
-            # Draw outer glow
-            for offset in range(3):
-                glow_rect = self.rect.inflate(offset * 2, offset * 2)
-                pygame.draw.rect(surface, (*Colors.NAVY_LIGHTEST, 30),
-                                 glow_rect, border_radius=10, width=1)
-
-        pygame.draw.rect(surface, border_color, self.rect, 2, border_radius=10)
-
-        # Draw text
-        display_text = self.text
-        if self.active and self.cursor_visible:
-            display_text += "|"
-
-        if display_text:
-            text_surface = font.render(display_text, True, Colors.NAVY_PRIMARY)
-            text_rect = text_surface.get_rect(center=self.rect.center)
-            surface.blit(text_surface, text_rect)
-
-        # Draw error message if any
-        if self.error_message:
-            error_surface = font.render(self.error_message, True, Colors.ERROR)
-            error_pos = (self.rect.centerx, self.rect.bottom + 20)
-            surface.blit(error_surface, error_surface.get_rect(center=error_pos))

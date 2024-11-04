@@ -6,16 +6,15 @@ Chat GPT 4o helped fix a small problem while Claude had reached his limit.
 
 Grok 2 (Beta) made the icon.
 
-## Math Flashcards v0.8.4
+## Math Flashcards v0.8.5
 
 An interactive math practice application featuring adaptive learning, detailed analytics, and personalized difficulty progression. The Hard and Custom difficulty levels are experimental. Skill practice for students is found in Intro, Basic, and Medium.
 
 ## Beta
-- Fixed inconsistent naming conventions. The app is named "Math Flashcards."
+- Graphics overhaul for various panels in game.
 - Higher difficulties scale in unusual ways.
 - Refining the "Custom" difficulty is an ongoing project.
-- Known bug when deleting the last non-default player while playing as that player.
-- Animation fading for background elements is broken.
+
 
 ## Features
 
@@ -140,6 +139,24 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Third-Party Licenses and Attribution
+
+This project uses the following open-source software:
+
+- Pygame (LGPL v2.1)
+  - Copyright © 2000-2024 Pygame Developers
+  - https://www.pygame.org/docs/LGPL.txt
+
+- PyInstaller (GPL with linking exception)
+  - Copyright © 2005-2024 PyInstaller Development Team
+  - https://github.com/pyinstaller/pyinstaller/blob/develop/COPYING.txt
+
+- Setuptools (MIT)
+  - Copyright © 2004-2024 Python Packaging Authority
+  - https://github.com/pypa/setuptools/blob/main/LICENSE
+
+These dependencies are used under their respective licenses. This project's MIT license applies only to the original code created for Math Flashcards.
 
 ## Acknowledgments
 

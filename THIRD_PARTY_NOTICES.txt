@@ -1,0 +1,34 @@
+Math Flashcards Third-Party Software Notices
+==========================================
+
+This project incorporates components from the following software:
+
+Pygame
+------
+Copyright © 2000-2024 Pygame Developers
+Licensed under LGPL v2.1
+https://www.pygame.org/docs/LGPL.txt
+
+Pygame is a set of Python modules designed for writing video games. It is written on top of the excellent SDL library.
+This allows you to create fully featured games and multimedia programs in the python language.
+
+PyInstaller
+-----------
+Copyright © 2005-2024 PyInstaller Development Team
+Licensed under GPL with linking exception
+https://github.com/pyinstaller/pyinstaller/blob/develop/COPYING.txt
+
+PyInstaller bundles a Python application and all its dependencies into a single package. The user can run the packaged
+app without installing a Python interpreter or any modules.
+
+Setuptools
+---------
+Copyright © 2004-2024 Python Packaging Authority
+Licensed under MIT License
+https://github.com/pypa/setuptools/blob/main/LICENSE
+
+Setuptools is a library designed to facilitate packaging Python projects by enhancing the Python standard library's
+distutils module.
+
+The use of these components is governed by their respective licenses. The MIT license included with Math Flashcards
+applies only to original code created specifically for this project.

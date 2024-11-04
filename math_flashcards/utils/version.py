@@ -27,7 +27,7 @@ from typing import Dict, Any
 # Version information
 VERSION_MAJOR = 0
 VERSION_MINOR = 8
-VERSION_PATCH = 4
+VERSION_PATCH = 5
 VERSION_TAG = "Beta"  # Can be alpha, beta, rc1, etc., or empty string for release
 BUILD_NUMBER = "1"  # Incremented with each build
 
@@ -45,6 +45,12 @@ APP_ID = "org.mathflashcards.app"  # Unique application identifier
 APP_LICENSE = "MIT"
 APP_REPOSITORY = "https://github.com/JD-Jones-ASES/math_flashcards.git"
 APP_COPYRIGHT = f"Copyright © {datetime.now().year} {APP_AUTHOR}"
+
+THIRD_PARTY_TEXT = """This project uses open-source components:
+- Pygame (LGPL v2.1)
+- PyInstaller (GPL with linking exception) 
+- Setuptools (MIT)
+See README.md for full attribution and license details."""
 
 def get_build_info() -> Dict[str, Any]:
     """Get comprehensive build information"""
