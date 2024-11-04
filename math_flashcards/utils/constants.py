@@ -138,52 +138,29 @@ class GameSettings:
     # Animation timings and settings
     ANIMATION = {
         # UI Animation timings
-        'cursor_blink_time': 400,  # Cursor blink interval (ms)
-        'feedback_duration': 1500,  # Duration to show correct/incorrect feedback (ms)
-        'transition_time': 300,  # Time for UI transitions (ms)
+        'cursor_blink_time': 400,
+        'feedback_duration': 1500,
+        'transition_time': 300,
 
         # Background Symbol Animation Settings
-        'background_symbol_speed': 5000,  # Time between symbol updates (ms)
-        'background_fade_time': 1000,  # Fade transition time (ms)
-        'background_symbol_count': 2,  # Number of background symbols
-        'background_symbol_min_alpha': 5,  # Minimum symbol transparency (0-255)
-        'background_symbol_max_alpha': 35,  # Maximum symbol transparency (0-255)
-        'background_symbol_size_min': 24,  # Minimum symbol font size
-        'background_symbol_size_max': 48,  # Maximum symbol font size
-        'background_animations_enabled': True,  # Allow disabling animations
-        'background_symbol_variation': 0.7,  # Random size/angle variation
-        'background_symbol_min_speed': 2000,  # Minimum animation speed (ms)
-        'background_symbol_max_speed': 5000,  # Maximum animation speed (ms)
+        'background_symbol_speed': 5000,  # Time between updates (ms)
+        'background_fade_time': 3000,  # Longer fade time for testing
+        'background_symbol_count': 3,  # More symbols for visibility
+        'background_symbol_size_min': 36,  # Larger minimum size
+        'background_symbol_size_max': 72,  # Larger maximum size
+        'background_animations_enabled': True,
 
-        # Symbol Colors (RGB with alpha)
-        'background_symbol_colors': [
-            (180, 190, 220, 10),  # Light navy blue with low alpha
-            (160, 180, 230, 5),  # Lighter blue
-            (140, 160, 210, 10)  # Slightly darker blue
+        # Available Symbols (limited set for testing)
+        'background_symbols': [
+            '+', '-', '×', '÷', '=',  # Basic operations only for now
         ],
 
-        # Available Symbols
-        'background_symbols': [
-    # Basic operations (universal support)
-    '+', '-', '×', '÷', '=',
-
-    # Common comparison (very reliable)
-    '<', '>', '≤', '≥',  # ≤ is \u2264, ≥ is \u2265
-
-    # Essential math symbols (widely supported)
-    '±', '√',  # \u00B1, \u221A
-
-        # Reliable Greek letters
-        '\u03A0',  # Π (Pi uppercase)
-        '\u03C0',  # π (pi lowercase)
-        '\u03A3',  # Σ (Sigma uppercase)
-        '\u0393',  # Γ (Gamma uppercase)
-        '\u0398',  # Θ (Theta uppercase)
-        '\u03B8',  # θ (theta lowercase)
-        '\u03B6',  # ζ (zeta lowercase)
-        '\u03C1',  # ρ (rho lowercase)
-]
-
+        # Symbol Colors (temporarily removed alpha component)
+        'background_symbol_colors': [
+            (180, 190, 220),  # Light navy blue
+            (160, 180, 230),  # Lighter blue
+            (140, 160, 210)  # Slightly darker blue
+        ]
     }
 
     # Difficulty configurations

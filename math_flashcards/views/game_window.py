@@ -409,38 +409,6 @@ class GameWindow:
 
         # Rest of sidebar drawing code remains the same...
 
-    def _draw_main_content(self) -> None:
-        """Draw the main content area with enhanced styling"""
-        if not self.game_session.state.current_question:
-            return
-
-        # Add subtle "math symbols" background pattern
-        pattern_surface = pygame.Surface(
-            (self.layout.WINDOW_WIDTH - self.layout.SIDEBAR_WIDTH,
-             self.layout.WINDOW_HEIGHT),
-            pygame.SRCALPHA
-        )
-
-        symbols = ['+', '−', '×', '÷', '=', '2', '4']
-        symbol_color = (100, 120, 180, 15)  # Very faint navy blue
-        font_size = 20
-        symbol_font = pygame.font.Font(None, font_size)
-
-        # Draw scattered math symbols
-        for i in range(300):  # Adjust number for desired density
-            x = random.randint(0, pattern_surface.get_width())
-            y = random.randint(0, pattern_surface.get_height())
-            symbol = random.choice(symbols)
-            symbol_surface = symbol_font.render(symbol, True, symbol_color)
-            pattern_surface.blit(
-                symbol_surface,
-                (x, y)
-            )
-
-        self.screen.blit(pattern_surface, (self.layout.SIDEBAR_WIDTH, 0))
-
-        # Rest of main content drawing code remains the same...
-
     def _lerp_color(self, color1: tuple, color2: tuple, progress: float) -> tuple:
         """Linearly interpolate between two colors"""
         return tuple(
@@ -552,10 +520,10 @@ class GameWindow:
         # Initialize animation state if needed
         if not hasattr(self, '_animation_state'):
             self._animation_state = {
-                'symbols': [],
-                'last_update': pygame.time.get_ticks(),
-                'fade_progress': 0.0,
-                'fading_in': True  # New flag to track fade direction
+                'symbols': self._generate_new_symbols(),
+                'previous_symbols': None,
+                'transition_start': pygame.time.get_ticks(),
+                'is_transitioning': False
             }
 
         # Get animation settings
@@ -564,69 +532,47 @@ class GameWindow:
         content_width = self.layout.WINDOW_WIDTH - self.layout.SIDEBAR_WIDTH
         content_height = self.layout.WINDOW_HEIGHT
 
-        # Update symbols if needed
-        if (current_time - self._animation_state['last_update'] >
-                settings['background_symbol_speed']):
-            # Generate new symbols with better position distribution
-            self._animation_state['symbols'] = [
-                {
-                    'symbol': random.choice(settings['background_symbols']),
-                    'pos': (
-                        random.randint(0, content_width),
-                        random.randint(0, content_height)
-                    ),
-                    'size': random.randint(settings['background_symbol_size_min'],
-                                           settings['background_symbol_size_max']),
-                    'color': random.choice(settings['background_symbol_colors']),
-                    'angle': random.randint(-30, 30)
-                }
-                for _ in range(settings['background_symbol_count'])
-            ]
-            self._animation_state['last_update'] = current_time
-            self._animation_state['fade_progress'] = 0.0
-            self._animation_state['fading_in'] = True  # Start fade-in for new symbols
+        # Check if it's time for new symbols
+        if (not self._animation_state['is_transitioning'] and
+                current_time - self._animation_state['transition_start'] > settings['background_symbol_speed']):
+            self._animation_state['previous_symbols'] = self._animation_state['symbols']
+            self._animation_state['symbols'] = self._generate_new_symbols()
+            self._animation_state['is_transitioning'] = True
+            self._animation_state['transition_start'] = current_time
 
-        # Update fade progress
-        fade_time = settings['background_fade_time']
-        fade_delta = (current_time - self._animation_state['last_update']) / fade_time
-
-        if self._animation_state['fading_in']:
-            # During fade-in
-            self._animation_state['fade_progress'] = min(1.0, fade_delta)
-            if self._animation_state['fade_progress'] >= 1.0:
-                # Once fully faded in, wait for symbol_speed before starting fade-out
-                if (current_time - self._animation_state['last_update'] >
-                        settings['background_symbol_speed']):
-                    self._animation_state['fading_in'] = False
-                    self._animation_state['fade_progress'] = 1.0
-        else:
-            # During fade-out
-            self._animation_state['fade_progress'] = max(0.0, 1.0 - fade_delta)
-
-        # Create pattern surface for content area only
+        # Create pattern surface
         pattern_surface = pygame.Surface((content_width, content_height), pygame.SRCALPHA)
 
-        # Draw symbols with fade effect
-        for symbol in self._animation_state['symbols']:
-            font = pygame.font.Font(None, symbol['size'])
+        # Calculate fade progress if transitioning
+        if self._animation_state['is_transitioning']:
+            progress = min(1.0, (current_time - self._animation_state['transition_start']) /
+                           float(settings['background_fade_time']))
 
-            # Calculate alpha based on fade progress
-            base_alpha = symbol['color'][3]
-            current_alpha = int(base_alpha * self._animation_state['fade_progress'])
-            color = (*symbol['color'][:3], current_alpha)
+            # Draw previous symbols fading out
+            if self._animation_state['previous_symbols']:
+                self._draw_symbol_set(pattern_surface,
+                                      self._animation_state['previous_symbols'],
+                                      int(255 * (1.0 - progress)))
 
-            text = font.render(symbol['symbol'], True, color)
-            if symbol['angle']:
-                text = pygame.transform.rotate(text, symbol['angle'])
+            # Draw new symbols fading in
+            self._draw_symbol_set(pattern_surface,
+                                  self._animation_state['symbols'],
+                                  int(255 * progress))
 
-            rect = text.get_rect(center=symbol['pos'])
-            pattern_surface.blit(text, rect)
+            if progress >= 1.0:
+                self._animation_state['is_transitioning'] = False
+                self._animation_state['previous_symbols'] = None
+        else:
+            # Draw current symbols at full opacity
+            self._draw_symbol_set(pattern_surface,
+                                  self._animation_state['symbols'],
+                                  255)
 
-        # Blit pattern surface onto main screen at correct position
+        # Draw pattern onto main screen
         self.screen.blit(pattern_surface, (self.layout.SIDEBAR_WIDTH, 0))
 
-        # Draw math content
-        self._draw_math_content()
+        # Draw math problem
+        self._draw_math_problem()
 
     def _draw_number_boxes(self, center_x: int, center_y: int, half_size: int) -> None:
         """Draw enhanced number input boxes with modern styling and visual effects"""
@@ -1301,7 +1247,96 @@ class GameWindow:
             if key in valid_keys and value > 0:
                 self._animation_settings[key] = value
 
-    def _draw_math_content(self) -> None:
+    def set_animation_settings(self, **settings) -> None:
+        """Update animation settings
+
+        Valid settings:
+        - symbol_speed: Time between updates (ms)
+        - fade_time: Transition fade time (ms)
+        - symbol_count: Number of background symbols
+        - min_alpha: Minimum symbol transparency
+        - max_alpha: Maximum symbol transparency
+        """
+        valid_settings = {
+            'symbol_speed', 'fade_time', 'symbol_count',
+            'min_alpha', 'max_alpha'
+        }
+
+        if not hasattr(self, '_animation_state'):
+            return
+
+        for key, value in settings.items():
+            if key in valid_settings and value > 0:
+                GameSettings.ANIMATION[f'background_{key}'] = value
+
+    def _generate_new_symbols(self) -> list:
+        """Generate a new set of background symbols"""
+        settings = GameSettings.ANIMATION
+        content_width = self.layout.WINDOW_WIDTH - self.layout.SIDEBAR_WIDTH
+        content_height = self.layout.WINDOW_HEIGHT
+
+        # Use fixed alpha values for testing
+        base_colors = [
+            (180, 190, 220),  # Light navy blue
+            (160, 180, 230),  # Lighter blue
+            (140, 160, 210)  # Slightly darker blue
+        ]
+
+        symbols = []
+        for _ in range(settings['background_symbol_count']):
+            color = random.choice(base_colors)
+            symbols.append({
+                'symbol': random.choice(settings['background_symbols']),
+                'pos': (
+                    random.randint(0, content_width),
+                    random.randint(0, content_height)
+                ),
+                'size': random.randint(
+                    settings['background_symbol_size_min'],
+                    settings['background_symbol_size_max']
+                ),
+                'color': color,
+                'angle': random.randint(-30, 30)
+            })
+        return symbols
+
+    def _draw_symbol_set(self, surface: pygame.Surface, symbols: list, alpha: int) -> None:
+        """Draw a set of symbols with given alpha value"""
+        for symbol in symbols:
+            # Create text surface
+            font = pygame.font.Font(None, symbol['size'])
+            text_surface = font.render(symbol['symbol'], True, symbol['color'])
+
+            # Rotate if needed
+            if symbol['angle']:
+                text_surface = pygame.transform.rotate(text_surface, symbol['angle'])
+
+            # Set transparency
+            text_surface.set_alpha(alpha)
+
+            # Draw to pattern surface
+            rect = text_surface.get_rect(center=symbol['pos'])
+            surface.blit(text_surface, rect)
+
+    def _draw_symbol_set(self, surface: pygame.Surface, symbols: list, alpha: int) -> None:
+        """Draw a set of symbols with given alpha value"""
+        for symbol in symbols:
+            # Create text surface
+            font = pygame.font.Font(None, symbol['size'])
+            text_surface = font.render(symbol['symbol'], True, symbol['color'])
+
+            # Rotate if needed
+            if symbol['angle']:
+                text_surface = pygame.transform.rotate(text_surface, symbol['angle'])
+
+            # Set transparency
+            text_surface.set_alpha(alpha)
+
+            # Draw to pattern surface
+            rect = text_surface.get_rect(center=symbol['pos'])
+            surface.blit(text_surface, rect)
+
+    def _draw_math_problem(self) -> None:
         """Draw the math problem components"""
         if not self.game_session.state.current_question:
             return
@@ -1310,7 +1345,7 @@ class GameWindow:
         center_y = self.layout.content_center_y
         half_size = self.layout.TRIANGLE_SIZE // 2
 
-        # Draw triangle points
+        # Draw triangle points with enhanced styling
         triangle_points = [
             (center_x, center_y + half_size),  # Bottom
             (center_x - half_size, center_y - half_size),  # Top left
@@ -1368,25 +1403,3 @@ class GameWindow:
                 feedback_surface,
                 feedback_surface.get_rect(center=feedback_pos)
             )
-
-    def set_animation_settings(self, **settings) -> None:
-        """Update animation settings
-
-        Valid settings:
-        - symbol_speed: Time between updates (ms)
-        - fade_time: Transition fade time (ms)
-        - symbol_count: Number of background symbols
-        - min_alpha: Minimum symbol transparency
-        - max_alpha: Maximum symbol transparency
-        """
-        valid_settings = {
-            'symbol_speed', 'fade_time', 'symbol_count',
-            'min_alpha', 'max_alpha'
-        }
-
-        if not hasattr(self, '_animation_state'):
-            return
-
-        for key, value in settings.items():
-            if key in valid_settings and value > 0:
-                GameSettings.ANIMATION[f'background_{key}'] = value
