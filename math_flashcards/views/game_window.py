@@ -187,7 +187,7 @@ class GameWindow:
         """Handle all game events"""
         if not self.game_session:
             return False
-            
+
         if event.type == pygame.VIDEORESIZE:
             self._handle_resize(event.w, event.h)
             return True
@@ -198,10 +198,19 @@ class GameWindow:
                 self._handle_admin_panel_scroll(1 if event.button == 5 else -1)
                 return True
             return self._handle_mouse_click(event.pos)
-            
+
+        elif event.type == pygame.MOUSEBUTTONUP:
+            # Handle button release states
+            self.submit_button.handle_release()
+            self.load_button.handle_release()
+            self.quit_button.handle_release()
+            for button in self.difficulty_buttons.values():
+                button.handle_release()
+            return True
+
         elif event.type == pygame.KEYDOWN:
             return self.game_session.handle_input(event)
-            
+
         return False
 
     def _handle_resize(self, width: int, height: int) -> None:
@@ -213,6 +222,36 @@ class GameWindow:
             pygame.RESIZABLE
         )
         self._init_ui_components()
+
+    def handle_event(self, event: pygame.event.Event) -> bool:
+        """Handle all game events"""
+        if not self.game_session:
+            return False
+
+        if event.type == pygame.VIDEORESIZE:
+            self._handle_resize(event.w, event.h)
+            return True
+
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            # Add this block for admin panel scroll handling
+            if self.admin_panel_open and event.button in (4, 5):  # 4 is scroll up, 5 is scroll down
+                self._handle_admin_panel_scroll(1 if event.button == 5 else -1)
+                return True
+            return self._handle_mouse_click(event.pos)
+
+        elif event.type == pygame.MOUSEBUTTONUP:
+            # Handle button release states
+            self.submit_button.handle_release()
+            self.load_button.handle_release()
+            self.quit_button.handle_release()
+            for button in self.difficulty_buttons.values():
+                button.handle_release()
+            return True
+
+        elif event.type == pygame.KEYDOWN:
+            return self.game_session.handle_input(event)
+
+        return False
 
     def _handle_mouse_click(self, pos: Tuple[int, int]) -> bool:
         """Handle mouse click events"""

@@ -16,13 +16,14 @@ import math
 
 
 class Button:
-    """Interactive button with clean, modern style"""
+    """Interactive button with improved state management and consistent styling"""
 
     def __init__(self, x: int, y: int, width: int, height: int,
                  text: str, color: Optional[Tuple[int, int, int]] = None,
                  style: str = 'default',
                  border_radius: int = 20):
         self.rect = pygame.Rect(x, y, width, height)
+        self.original_rect = self.rect.copy()  # Store original position
         self.text = text
         self.base_color = color or Colors.HIGHLIGHT
         self.style = style
@@ -31,59 +32,72 @@ class Button:
         self.selected = False
         self.border_radius = border_radius
         self._pressed = False
+        self._press_offset = 2  # Consistent press animation offset
+
+        # Initialize state colors
+        self._colors = self._calculate_colors()
+
+    def _calculate_colors(self) -> Dict[str, Tuple[int, int, int]]:
+        """Calculate all button state colors based on base color"""
+        base = self.base_color
+        return {
+            'normal': tuple(int((c * 0.1) + (255 * 0.9)) for c in base),
+            'hover': tuple(int((c * 0.2) + (255 * 0.8)) for c in base),
+            'selected': tuple(int((c * 0.9) + (255 * 0.1)) for c in base),
+            'pressed': tuple(int((c * 0.3) + (255 * 0.7)) for c in base),
+            'disabled': Colors.WIN_GRAY,
+            'border': base,
+            'disabled_border': Colors.BORDER_GRAY,
+            'text': Colors.NAVY_PRIMARY,
+            'text_selected': Colors.WHITE,
+            'text_disabled': Colors.TEXT_GRAY
+        }
 
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
-        """Draw the button with navy theme styling"""
-        # Calculate colors based on state
+        """Draw the button with consistent state styling"""
+        # Reset position to original before drawing
+        self.rect = self.original_rect.copy()
+
+        # Determine current state colors
         if self.disabled:
-            fill_color = Colors.WIN_GRAY
-            border_color = Colors.BORDER_GRAY
-            text_color = Colors.TEXT_GRAY
+            fill_color = self._colors['disabled']
+            border_color = self._colors['disabled_border']
+            text_color = self._colors['text_disabled']
+        elif self._pressed:
+            fill_color = self._colors['pressed']
+            border_color = self._colors['border']
+            text_color = self._colors['text_selected']
+            self.rect.y += self._press_offset  # Apply press offset
+        elif self.selected:
+            fill_color = self._colors['selected']
+            border_color = self._colors['border']
+            text_color = self._colors['text_selected']
+        elif self.hover:
+            fill_color = self._colors['hover']
+            border_color = self._colors['border']
+            text_color = self._colors['text']
         else:
-            # Start with base color
-            base = self.base_color
+            fill_color = self._colors['normal']
+            border_color = self._colors['border']
+            text_color = self._colors['text']
 
-            # Create color variations
-            if self.selected:
-                # Selected: stronger color
-                fill_color = tuple(int((c * 0.9) + (255 * 0.1)) for c in base)
-                border_color = base
-                text_color = Colors.WHITE
-            elif self.hover:
-                # Hover: lighter variation
-                fill_color = tuple(int((c * 0.2) + (255 * 0.8)) for c in base)
-                border_color = base
-                text_color = Colors.NAVY_DARK
-            else:
-                # Normal: very light tint
-                fill_color = tuple(int((c * 0.1) + (255 * 0.9)) for c in base)
-                border_color = base
-                text_color = Colors.NAVY_PRIMARY
-
-        # Pressed effect
-        if self._pressed and not self.disabled:
-            self.rect.y += 1
-            # Darker when pressed
-            fill_color = tuple(int((c * 0.3) + (255 * 0.7)) for c in self.base_color)
-            text_color = Colors.WHITE
-
-        # Draw button with shadow
+        # Draw shadow (except when pressed or disabled)
         if not self.disabled and not self._pressed:
             shadow_rect = self.rect.copy()
-            shadow_rect.y += 2
+            shadow_rect.y += self._press_offset
             pygame.draw.rect(surface, Colors.NAVY_DARKEST,
                              shadow_rect, border_radius=self.border_radius)
 
-        # Draw filled background
+        # Draw button background
         pygame.draw.rect(surface, fill_color, self.rect,
                          border_radius=self.border_radius)
 
-        # Draw border - thicker for selected state
+        # Draw border
         border_width = 2 if self.selected else 1
         pygame.draw.rect(surface, border_color, self.rect,
                          border_radius=self.border_radius, width=border_width)
 
-        # Draw glossy highlight if not pressed
+        # Draw highlight effect (except when pressed or disabled)
         if not self._pressed and not self.disabled:
             highlight_rect = self.rect.copy()
             highlight_rect.height = self.rect.height // 2
@@ -93,34 +107,29 @@ class Button:
                              border_radius=self.border_radius)
             surface.blit(highlight_surface, highlight_rect)
 
-        # Draw text with optional glow for selected state
+        # Draw text glow for selected state
         if self.selected and not self.disabled:
-            # Draw text glow
             glow_color = (*Colors.NAVY_LIGHTEST, 128)
             for offset in [-1, 1]:
-                glow_surface = font.render(self.text, True, glow_color)
-                glow_rect = glow_surface.get_rect(center=self.rect.center)
-                glow_rect.x += offset
-                surface.blit(glow_surface, glow_rect)
-                glow_rect.y += offset
-                surface.blit(glow_surface, glow_rect)
+                for dx, dy in [(offset, 0), (0, offset)]:
+                    glow_surface = font.render(self.text, True, glow_color)
+                    glow_rect = glow_surface.get_rect(center=self.rect.center)
+                    glow_rect.x += dx
+                    glow_rect.y += dy
+                    surface.blit(glow_surface, glow_rect)
 
         # Draw main text
         text_surface = font.render(self.text, True, text_color)
         text_rect = text_surface.get_rect(center=self.rect.center)
         surface.blit(text_surface, text_rect)
 
-        # Reset pressed offset
-        if self._pressed and not self.disabled:
-            self.rect.y -= 1
-
     def update_hover(self, pos: Tuple[int, int]) -> None:
         """Update hover state"""
-        self.hover = self.rect.collidepoint(pos) and not self.disabled
+        self.hover = self.original_rect.collidepoint(pos) and not self.disabled
 
     def handle_click(self, pos: Tuple[int, int]) -> bool:
         """Handle mouse click"""
-        if self.rect.collidepoint(pos) and not self.disabled:
+        if self.original_rect.collidepoint(pos) and not self.disabled:
             self._pressed = True
             return True
         return False
@@ -128,7 +137,6 @@ class Button:
     def handle_release(self) -> None:
         """Handle mouse release"""
         self._pressed = False
-
 
 class ListItem:
     """Clickable list item with checkbox"""

@@ -1,39 +1,39 @@
 {
   "version": "1.0",
-  "last_updated": "2024-11-02T13:07:56.900446",
+  "last_updated": "2024-11-04T02:58:20.816920",
   "players": [
     {
       "name": "Mr. Jones",
       "creation_date": "2024-11-02T08:36:06.335741",
-      "last_active": "2024-11-02T13:07:54.511586",
-      "total_problems_attempted": 27,
-      "total_correct": 27,
-      "current_streak": 27,
-      "best_streak": 27,
-      "time_spent_mins": 1.257493535677592,
+      "last_active": "2024-11-04T02:57:18.106850",
+      "total_problems_attempted": 37,
+      "total_correct": 37,
+      "current_streak": 37,
+      "best_streak": 37,
+      "time_spent_mins": 2.0285224596659344,
       "operation_stats": {
         "+": {
-          "problems_attempted": 5,
-          "correct": 5,
-          "avg_response_time_ms": 4664.894533157349,
+          "problems_attempted": 15,
+          "correct": 15,
+          "avg_response_time_ms": 4639.080540339152,
           "accuracy": 100.0,
           "fact_mastery": {
-            "+_1": 0.08653844451904297,
-            "+_2": 0.0,
-            "+_3": 0.06,
+            "+_1": 0.09653844451904296,
+            "+_2": 0.1920773048400879,
+            "+_3": 0.46357594871520996,
             "+_4": 0.0,
             "+_5": 0.0,
-            "+_6": 0.08610494422912598,
+            "+_6": 0.03610494422912598,
             "+_7": 0.0,
             "+_8": 0.0,
             "+_9": 0.0,
             "+_10": 0.0,
             "+_11": 0.0,
             "+_12": 0.0,
-            "+_27": 0.06,
-            "+_47": 0.06
+            "+_27": 0.009999999999999995,
+            "+_47": 0.009999999999999995
           },
-          "last_practiced": "2024-11-02T13:07:39.937441"
+          "last_practiced": "2024-11-04T02:57:18.106839"
         },
         "-": {
           "problems_attempted": 2,
@@ -102,11 +102,11 @@
       },
       "difficulty_stats": {
         "Intro": {
-          "problems_attempted": 21,
-          "correct": 21,
-          "avg_response_time_ms": 2068.2729652949743,
+          "problems_attempted": 31,
+          "correct": 31,
+          "avg_response_time_ms": 2893.402184209516,
           "accuracy": 100.0,
-          "last_played": "2024-11-02T13:07:22.494766"
+          "last_played": "2024-11-04T02:57:18.106841"
         },
         "Basic": {
           "problems_attempted": 0,
@@ -139,11 +139,11 @@
       },
       "achievement_stats": {
         "perfect_sessions": 17,
-        "problems_solved_under_3s": 19,
-        "longest_streak": 27,
-        "total_practice_days": 1,
+        "problems_solved_under_3s": 22,
+        "longest_streak": 37,
+        "total_practice_days": 2,
         "consecutive_days_streak": 1,
-        "last_practice_date": "2024-11-02"
+        "last_practice_date": "2024-11-04"
       },
       "recent_sessions": [
         {
@@ -152,16 +152,64 @@
           "problems_attempted": 27,
           "correct": 27,
           "operations_used": [
-            "-",
-            "/",
             "+",
-            "*"
+            "-",
+            "*",
+            "/"
           ],
           "difficulty_levels": [
             "Custom",
             "Intro"
           ],
           "avg_response_time_ms": 2794.430079283538
+        },
+        {
+          "date": "2024-11-04",
+          "duration_mins": 0.12168866793314616,
+          "problems_attempted": 1,
+          "correct": 1,
+          "operations_used": [
+            "+"
+          ],
+          "difficulty_levels": [
+            "Intro"
+          ],
+          "avg_response_time_ms": 7301.214933395386
+        },
+        {
+          "date": "2024-11-04",
+          "duration_mins": 0.3044347723325094,
+          "problems_attempted": 3,
+          "correct": 3,
+          "operations_used": [
+            "+"
+          ],
+          "difficulty_levels": [
+            "Intro"
+          ],
+          "avg_response_time_ms": 6088.587522506714
+        },
+        {
+          "date": "2024-11-04",
+          "duration_mins": 0.34492077032725016,
+          "problems_attempted": 6,
+          "correct": 6,
+          "operations_used": [
+            "+"
+          ],
+          "difficulty_levels": [
+            "Intro"
+          ],
+          "avg_response_time_ms": 3449.1263230641684
+        },
+        {
+          "date": "2024-11-04",
+          "duration_mins": 0.0,
+          "problems_attempted": 0,
+          "correct": 0,
+          "operations_used": [],
+          "difficulty_levels": [],
+          "avg_response_time_ms": 0.0
         }
       ]
     }
