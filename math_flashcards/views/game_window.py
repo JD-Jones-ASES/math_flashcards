@@ -946,6 +946,8 @@ class GameWindow:
             'delete': delete_rect
         }
 
+    # In game_window.py, replace the _handle_admin_panel_click method:
+
     def _handle_admin_panel_click(self, pos: Tuple[int, int]) -> bool:
         """Handle clicks in the admin panel"""
         if self.admin_confirm_delete:
@@ -962,11 +964,21 @@ class GameWindow:
                             f"Error deleting player {self.admin_confirm_delete}"
                         )
                         self.admin_message_timer = pygame.time.get_ticks()
+
+                        # If the deleted player was the current player, return to login
+                        if success and self.game_session.player.name == self.admin_confirm_delete:
+                            # Post a custom event to trigger login screen
+                            pygame.event.post(pygame.event.Event(
+                                pygame.USEREVENT,
+                                {'action': 'load'}  # Reuse the 'load' action to return to login
+                            ))
+                            self.admin_panel_open = False
+
                     self.admin_confirm_delete = None
                     return True
             return True
 
-        # Calculate list area
+        # Rest of the method remains unchanged...
         panel_width = min(600, self.layout.WINDOW_WIDTH - 100)
         panel_height = min(500, self.layout.WINDOW_HEIGHT - 100)
         panel_x = (self.layout.WINDOW_WIDTH - panel_width) // 2
@@ -988,7 +1000,7 @@ class GameWindow:
 
             item_y = content_y + (i * item_height)
             delete_rect = pygame.Rect(
-                content_x + content_width - 40,  # Match _draw_player_list
+                content_x + content_width - 40,
                 item_y + (item_height - 30) // 2,
                 30,
                 30
