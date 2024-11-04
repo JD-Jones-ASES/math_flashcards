@@ -166,7 +166,7 @@ These dependencies are used under their respective licenses. This project's MIT 
 
 ## Version
 
-Current Version: 0.8.0-beta+1
+Current Version: 0.8.5-beta+1
 
 ---
 
