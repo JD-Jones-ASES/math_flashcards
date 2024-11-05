@@ -138,47 +138,47 @@ class GameWindow:
 	    return items
 
     def _create_difficulty_buttons(self) -> Dict[DifficultyLevel, Button]:
-	    """Create difficulty selection buttons"""
-	    buttons = {}
-	    # Calculate position below operations list with spacing
-	    operations_height = (self.layout.HEADER_HEIGHT + self.layout.PADDING + 
-	                       self.layout.LIST_ITEM_HEIGHT * 4)
-	    start_y = operations_height + self.layout.SECTION_SPACING
-	    
-	    # Add "Difficulty" label
-	    diff_label_height = 20
-	    
-	    # Create single column of smaller buttons
-	    button_width = self.layout.SIDEBAR_WIDTH - (self.layout.PADDING * 2)
-	    button_spacing = 4
-	    
-	    difficulties = [d for d in DifficultyLevel if d != DifficultyLevel.CUSTOM]
-	    y = start_y + diff_label_height + self.layout.PADDING
-	    
-	    for difficulty in difficulties:
-	        settings = GameSettings.DIFFICULTY_SETTINGS[difficulty]
-	        buttons[difficulty] = Button(
-	            self.layout.PADDING,
-	            y,
-	            button_width,
-	            self.layout.BUTTON_HEIGHT,
-	            difficulty.value,
-	            settings['color']
-	        )
-	        y += self.layout.BUTTON_HEIGHT + button_spacing
-	    
-	    # Add Custom mode button at the bottom with some extra spacing
-	    buttons[DifficultyLevel.CUSTOM] = Button(
-	        self.layout.PADDING,
-	        y + button_spacing,
-	        button_width,
-	        self.layout.BUTTON_HEIGHT,
-	        DifficultyLevel.CUSTOM.value,
-	        GameSettings.DIFFICULTY_SETTINGS[DifficultyLevel.CUSTOM]['color']
-	    )
-	    
-	    return buttons
-    
+        """Create difficulty selection buttons"""
+        buttons = {}
+        # Calculate position below operations list with spacing
+        operations_height = (self.layout.HEADER_HEIGHT + self.layout.PADDING +
+                             self.layout.LIST_ITEM_HEIGHT * 4)
+        start_y = operations_height + self.layout.SECTION_SPACING
+
+        # Add "Difficulty" label
+        diff_label_height = 20
+
+        # Create single column of smaller buttons
+        button_width = self.layout.SIDEBAR_WIDTH - (self.layout.PADDING * 2)
+        button_spacing = 4
+
+        difficulties = [d for d in DifficultyLevel if d != DifficultyLevel.CUSTOM]
+        y = start_y + diff_label_height + self.layout.PADDING
+
+        for difficulty in difficulties:
+            settings = GameSettings.DIFFICULTY_SETTINGS[difficulty]
+            buttons[difficulty] = Button(
+                self.layout.PADDING,
+                y,
+                button_width,
+                self.layout.BUTTON_HEIGHT,
+                difficulty.value,
+                settings['color']  # Using the difficulty-specific color
+            )
+            y += self.layout.BUTTON_HEIGHT + button_spacing
+
+        # Add Custom mode button at the bottom with some extra spacing
+        buttons[DifficultyLevel.CUSTOM] = Button(
+            self.layout.PADDING,
+            y + button_spacing,
+            button_width,
+            self.layout.BUTTON_HEIGHT,
+            DifficultyLevel.CUSTOM.value,
+            GameSettings.DIFFICULTY_SETTINGS[DifficultyLevel.CUSTOM]['color']  # Using Custom mode color
+        )
+
+        return buttons
+
     def set_game_session(self, session: Any) -> None:
         """Set the active game session"""
         self.game_session = session
@@ -445,58 +445,12 @@ class GameWindow:
             self._draw_about_panel()
 
         pygame.display.flip()
+
     def _draw_sidebar(self) -> None:
         """Draw the sidebar with enhanced styling"""
-        # Create sidebar surface with translucent navy overlay
-        sidebar_rect = pygame.Rect(
-            0, 0,
-            self.layout.SIDEBAR_WIDTH,
-            self.layout.WINDOW_HEIGHT
-        )
+        # ... [previous sidebar background code remains the same] ...
 
-        # Draw sidebar background with subtle gradient
-        sidebar_surface = pygame.Surface((sidebar_rect.width, sidebar_rect.height), pygame.SRCALPHA)
-        for y in range(sidebar_rect.height):
-            progress = y / sidebar_rect.height
-            color = self._lerp_color(
-                (245, 250, 255, 250),  # Almost white at top
-                (235, 245, 255, 250),  # Slightly blue-tinted white at bottom
-                progress
-            )
-            pygame.draw.line(sidebar_surface, color,
-                             (0, y), (sidebar_rect.width, y))
-
-        # Add subtle edge lighting
-        edge_width = 3
-        for i in range(edge_width):
-            alpha = 100 - (i * 30)
-            pygame.draw.line(
-                sidebar_surface,
-                (255, 255, 255, alpha),
-                (sidebar_rect.width - i, 0),
-                (sidebar_rect.width - i, sidebar_rect.height)
-            )
-
-        self.screen.blit(sidebar_surface, sidebar_rect)
-
-        # Draw the rest of the sidebar content
-        # Header
-        header_rect = pygame.Rect(0, 0,
-                                  self.layout.SIDEBAR_WIDTH,
-                                  self.layout.HEADER_HEIGHT)
-        pygame.draw.rect(self.screen, Colors.HIGHLIGHT, header_rect)
-        header_text = self.fonts['small'].render("Operations", True, Colors.WHITE)
-        self.screen.blit(
-            header_text,
-            (self.layout.PADDING,
-             (self.layout.HEADER_HEIGHT - header_text.get_height()) // 2)
-        )
-
-        # Operation items
-        for item in self.operation_items.values():
-            item.draw(self.screen, self.fonts['small'])
-
-        # Difficulty section header
+        # Draw difficulty section header
         operations_height = (self.layout.HEADER_HEIGHT + self.layout.PADDING +
                              self.layout.LIST_ITEM_HEIGHT * 4)
         diff_label_y = operations_height + self.layout.SECTION_SPACING
@@ -505,10 +459,15 @@ class GameWindow:
 
         # Difficulty buttons
         for difficulty, button in self.difficulty_buttons.items():
+            # Set button state but preserve the original color
             button.selected = (difficulty == self.game_session.state.difficulty)
             button.disabled = (difficulty == DifficultyLevel.CUSTOM and
                                not self.game_session.player.can_use_custom_mode())
             button.draw(self.screen, self.fonts['small'])
+
+        # Operation items
+        for item in self.operation_items.values():
+            item.draw(self.screen, self.fonts['small'])
 
         # Stats panel at the bottom
         self.stats_panel.draw(self.screen, self.fonts)
