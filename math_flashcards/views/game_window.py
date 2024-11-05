@@ -1114,12 +1114,42 @@ class GameWindow:
 
         return False
 
-    def _handle_admin_panel_hover(self, pos: Tuple[int, int]) -> None:
-        """Update hover states in admin panel"""
+    def _handle_admin_panel_click(self, pos: Tuple[int, int]) -> bool:
+        """Handle clicks in the admin panel"""
         if self.admin_confirm_delete:
-            return
+            # Handle confirmation dialog buttons
+            if hasattr(self, 'confirm_cancel_button'):
+                if self.confirm_cancel_button.handle_click(pos):
+                    self.admin_confirm_delete = None
+                    return True
 
-        # Calculate list area
+            if hasattr(self, 'confirm_delete_button'):
+                if self.confirm_delete_button.handle_click(pos):
+                    # Actually call delete_player here
+                    success = self.game_session.player_controller.delete_player(
+                        self.admin_confirm_delete
+                    )
+                    self.admin_message = (
+                        f"Player {self.admin_confirm_delete} deleted successfully"
+                        if success else
+                        f"Error deleting player {self.admin_confirm_delete}"
+                    )
+                    self.admin_message_timer = pygame.time.get_ticks()
+
+                    # If the deleted player was the current player, return to login
+                    if success and self.game_session.player.name == self.admin_confirm_delete:
+                        pygame.event.post(pygame.event.Event(
+                            pygame.USEREVENT,
+                            {'action': 'load'}
+                        ))
+                        self.admin_panel_open = False
+
+                    self.admin_confirm_delete = None
+                    return True
+
+            return True
+
+        # Handle clicks on delete buttons
         panel_width = min(600, self.layout.WINDOW_WIDTH - 100)
         panel_height = min(500, self.layout.WINDOW_HEIGHT - 100)
         panel_x = (self.layout.WINDOW_WIDTH - panel_width) // 2
@@ -1128,24 +1158,30 @@ class GameWindow:
         content_x = panel_x + 20
         content_y = panel_y + 50  # After header
         content_width = panel_width - 40
-        item_height = 56  # Match the height used in _draw_player_list
+        item_height = 56  # Match the drawing height
 
-        # Check if mouse is within the list area
-        list_rect = pygame.Rect(content_x, content_y, content_width, panel_height - 70)
+        # Check for clicks on delete buttons
+        players = self.game_session.player_controller.load_players()
+        visible_items = (panel_height - 70) // item_height
 
-        if list_rect.collidepoint(pos):
-            # Calculate which item is being hovered
-            relative_y = pos[1] - content_y
-            hovered_index = (relative_y // item_height) + self.admin_scroll_offset
+        for i, player in enumerate(players[self.admin_scroll_offset:
+        self.admin_scroll_offset + visible_items]):
+            if player == "Mr. Jones":
+                continue
 
-            # Verify the index is valid
-            players = self.game_session.player_controller.load_players()
-            if 0 <= hovered_index < len(players):
-                self.admin_hover_player = hovered_index
-            else:
-                self.admin_hover_player = None
-        else:
-            self.admin_hover_player = None
+            # Calculate delete button position - MUST MATCH DRAWING CODE
+            button_width = 80
+            button_height = 32
+            button_x = content_x + content_width - button_width - 16
+            button_y = content_y + (i * item_height) + (item_height - button_height) // 2
+
+            delete_rect = pygame.Rect(button_x, button_y, button_width, button_height)
+
+            if delete_rect.collidepoint(pos):
+                self.admin_confirm_delete = player
+                return True
+
+        return False
 
     def _handle_admin_panel_scroll(self, y: int) -> None:
         """Handle mouse wheel scrolling in admin panel"""
@@ -1526,3 +1562,40 @@ class GameWindow:
                 feedback_surface,
                 feedback_surface.get_rect(center=feedback_pos)
             )
+
+    def _handle_admin_panel_hover(self, pos: Tuple[int, int]) -> None:
+        """Update hover states in admin panel"""
+        if self.admin_confirm_delete:
+            if hasattr(self, 'confirm_cancel_button'):
+                self.confirm_cancel_button.update_hover(pos)
+            if hasattr(self, 'confirm_delete_button'):
+                self.confirm_delete_button.update_hover(pos)
+            return
+
+        # Calculate list area
+        panel_width = min(600, self.layout.WINDOW_WIDTH - 100)
+        panel_height = min(500, self.layout.WINDOW_HEIGHT - 100)
+        panel_x = (self.layout.WINDOW_WIDTH - panel_width) // 2
+        panel_y = (self.layout.WINDOW_HEIGHT - panel_height) // 2
+
+        content_x = panel_x + 20
+        content_y = panel_y + 50  # After header
+        content_width = panel_width - 40
+        item_height = 56  # Match the height used in _draw_player_list
+
+        # Check if mouse is within the list area
+        list_rect = pygame.Rect(content_x, content_y, content_width, panel_height - 70)
+
+        if list_rect.collidepoint(pos):
+            # Calculate which item is being hovered
+            relative_y = pos[1] - content_y
+            hovered_index = (relative_y // item_height) + self.admin_scroll_offset
+
+            # Verify the index is valid
+            players = self.game_session.player_controller.load_players()
+            if 0 <= hovered_index < len(players):
+                self.admin_hover_player = hovered_index
+            else:
+                self.admin_hover_player = None
+        else:
+            self.admin_hover_player = None

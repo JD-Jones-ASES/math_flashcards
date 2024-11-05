@@ -3,6 +3,7 @@ import os
 import sys
 import shutil
 import pathlib
+import threading
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 import logging
@@ -11,6 +12,7 @@ from math_flashcards.utils.constants import GameSettings
 
 class PlayerController:
     """Controls player data management and persistence with improved validation and backup"""
+
     def __init__(self, backup_dir: str = "backups"):
         # Get the application base directory
         if getattr(sys, 'frozen', False):
@@ -33,11 +35,16 @@ class PlayerController:
         # Initialize directories
         self.backup_dir.mkdir(parents=True, exist_ok=True)
 
+        # Initialize caching and thread safety
+        self._player_cache = {}
+        self._last_file_read = None
+        self._file_lock = threading.Lock()
+
         # Now set up logging based on execution context
         if getattr(sys, 'frozen', False):
             # Use simpler logging for frozen executable
             logging.basicConfig(
-                filename=str(self.log_file),  # Convert Path to string
+                filename=str(self.log_file),
                 level=logging.INFO,
                 format='%(asctime)s - %(levelname)s - %(message)s'
             )
@@ -172,25 +179,29 @@ class PlayerController:
     def load_players(self) -> List[str]:
         """Load and return list of player names with validation"""
         try:
-            with open(self.data_file, 'r') as f:
-                data = json.load(f)
+            with self._file_lock:
+                with open(self.data_file, 'r') as f:
+                    data = json.load(f)
 
-            if not self._validate_player_data(data):
-                # Try to restore from latest backup
-                backup_file = self._find_latest_backup()
-                if backup_file:
-                    self.logger.warning("Attempting to restore from backup")
-                    with open(backup_file, 'r') as f:
-                        data = json.load(f)
-                    if not self._validate_player_data(data):
-                        raise ValueError("Backup data also invalid")
-                else:
-                    self.logger.warning("No valid backup found. Creating new default data.")
-                    self._create_default_data()
-                    with open(self.data_file, 'r') as f:
-                        data = json.load(f)
+                if not self._validate_player_data(data):
+                    backup_file = self._find_latest_backup()
+                    if backup_file:
+                        with open(backup_file, 'r') as f:
+                            data = json.load(f)
+                        if not self._validate_player_data(data):
+                            raise ValueError("Backup data also invalid")
+                    else:
+                        self._create_default_data()
+                        with open(self.data_file, 'r') as f:
+                            data = json.load(f)
 
-            return [player["name"] for player in data["players"]]
+                # Replace entire cache with current file data
+                self._player_cache = {
+                    player["name"]: player for player in data["players"]
+                }
+                self._last_file_read = datetime.now()
+
+                return [player["name"] for player in data["players"]]
 
         except Exception as e:
             self.logger.error(f"Error loading players: {str(e)}")
@@ -210,55 +221,48 @@ class PlayerController:
             return None
 
     def save_progress(self, force: bool = False) -> bool:
-        """Save current player's progress with validation and backup"""
+        """Save current player's progress with batching"""
         if not self.current_player:
             return False
-            
-        # Check if auto-save interval has elapsed
+
         current_time = datetime.now()
-        if not force and (current_time - self.last_save_time).total_seconds() < self.auto_save_interval:
-            return False
-            
-        try:
-            # Read current data
-            with open(self.data_file, 'r') as f:
-                data = json.load(f)
-            
-            # Create backup before modifying
-            self._create_backup()
-            
-            # Update player data
-            updated = False
-            for i, player in enumerate(data["players"]):
-                if player["name"] == self.current_player.name:
-                    new_player_data = self.current_player.to_dict()
-                    if self._validate_single_player(new_player_data):
-                        data["players"][i] = new_player_data
-                        updated = True
-                        break
-            
-            if not updated:
-                self.logger.error(f"Player {self.current_player.name} not found in data file")
-                return False
-                
-            data["last_updated"] = current_time.isoformat()
-            
-            # Validate complete data before saving
-            if not self._validate_player_data(data):
-                self.logger.error("Data validation failed before save")
-                return False
-                
-            # Save updated data
-            with open(self.data_file, 'w') as f:
-                json.dump(data, f, indent=2)
-                
-            self.last_save_time = current_time
-            self.logger.info(f"Progress saved for player {self.current_player.name}")
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"Error saving progress: {str(e)}")
-            return False
+
+        # Update memory cache while preserving existing players
+        self._player_cache[self.current_player.name] = self.current_player.to_dict()
+
+        # Only write to disk if enough time has passed or forced
+        if force or (current_time - self.last_save_time).seconds >= self.auto_save_interval:
+            with self._file_lock:
+                try:
+                    # Read existing data first
+                    if os.path.exists(self.data_file):
+                        with open(self.data_file, 'r') as f:
+                            data = json.load(f)
+                            existing_players = {p["name"]: p for p in data["players"]}
+                    else:
+                        existing_players = {}
+
+                    # Merge cache with existing data
+                    existing_players.update(self._player_cache)
+
+                    # Prepare data for saving
+                    save_data = {
+                        "version": "1.0",
+                        "last_updated": current_time.isoformat(),
+                        "players": list(existing_players.values())
+                    }
+
+                    success = self._safe_write_json(save_data)
+                    if success:
+                        self.last_save_time = current_time
+                        return True
+                    return False
+
+                except Exception as e:
+                    self.logger.error(f"Error saving progress: {str(e)}")
+                    return False
+
+        return True
 
     def _create_default_data(self) -> None:
         """Create default player data file"""
@@ -465,76 +469,43 @@ class PlayerController:
         }
 
     def delete_player(self, name: str) -> bool:
-        """Delete a player from the system with improved validation and cleanup"""
+        """Delete a player from the system"""
         # Protect the default player
         if name == "Mr. Jones":
             self.logger.warning(f"Attempted to delete protected default player {name}")
             return False
 
         try:
-            # Validate player exists before attempting deletion
-            if not self._player_exists(name):
-                self.logger.warning(f"Attempted to delete non-existent player {name}")
-                return False
+            with self._file_lock:
+                # Read current data
+                with open(self.data_file, 'r') as f:
+                    data = json.load(f)
 
-            with open(self.data_file, 'r') as f:
-                data = json.load(f)
+                # Remove player
+                original_count = len(data["players"])
+                data["players"] = [p for p in data["players"] if p["name"] != name]
+                new_count = len(data["players"])
 
-            # Verify data structure before modification
-            if not self._validate_player_data(data):
-                self.logger.error("Invalid data structure detected before deletion")
-                return False
+                # Update timestamp and write back
+                data["last_updated"] = datetime.now().isoformat()
 
-            # Create backup before modification
-            if not self._create_backup():
-                self.logger.error("Failed to create backup before player deletion")
-                return False
+                # Write updated data
+                with open(self.data_file, 'w') as f:
+                    json.dump(data, f, indent=2)
 
-            # Store initial player count
-            initial_count = len(data["players"])
+                # Update cache to match file
+                self._player_cache = {
+                    p["name"]: p for p in data["players"]
+                }
 
-            # Remove player
-            data["players"] = [p for p in data["players"] if p["name"] != name]
+                # Clear current player if deleted
+                if self.current_player and self.current_player.name == name:
+                    self.current_player = None
 
-            # Verify one player was removed
-            if len(data["players"]) != initial_count - 1:
-                self.logger.error(
-                    f"Unexpected player count after deletion: expected {initial_count - 1}, got {len(data['players'])}")
-                return False
+                return True
 
-            # Update timestamp
-            data["last_updated"] = datetime.now().isoformat()
-
-            # Validate modified data
-            if not self._validate_player_data(data):
-                self.logger.error("Invalid data structure detected after deletion")
-                return False
-
-            # Save updated data
-            with open(self.data_file, 'w') as f:
-                json.dump(data, f, indent=2)
-
-            # Clear current player if deleted
-            if self.current_player and self.current_player.name == name:
-                self.current_player = None
-                self.logger.info(f"Cleared current player after deletion of {name}")
-
-            # Remove any backup files specific to this player
-            try:
-                backup_pattern = f"*{name}*.json"
-                for backup_file in self.backup_dir.glob(backup_pattern):
-                    backup_file.unlink()
-            except Exception as e:
-                self.logger.warning(f"Error cleaning up backup files for {name}: {str(e)}")
-
-            self.logger.info(f"Successfully deleted player {name}")
-            return True
-
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            self.logger.error(f"Error during player deletion: {str(e)}")
-            return False
         except Exception as e:
-            self.logger.error(f"Unexpected error during player deletion: {str(e)}")
+            self.logger.error(f"Error during player deletion: {str(e)}")
             return False
 
     def select_player(self, name: str) -> Optional[Player]:
@@ -601,3 +572,25 @@ class PlayerController:
                 
         except Exception as e:
             self.logger.error(f"Error updating last active: {str(e)}")
+
+    def _safe_write_json(self, data: dict) -> bool:
+        """Write JSON data with backup and atomic operation"""
+        temp_file = f"{self.data_file}.tmp"
+        backup_file = f"{self.data_file}.bak"
+
+        try:
+            # Write to temp file first
+            with open(temp_file, 'w') as f:
+                json.dump(data, f, indent=2)
+
+            # Create backup of current file
+            if os.path.exists(self.data_file):
+                shutil.copy2(self.data_file, backup_file)
+
+            # Atomic rename of temp file
+            os.replace(temp_file, self.data_file)
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Safe write failed: {str(e)}")
+            return False
