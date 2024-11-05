@@ -20,12 +20,14 @@ class Button:
 
     def __init__(self, x: int, y: int, width: int, height: int,
                  text: str, color: Optional[Tuple[int, int, int]] = None,
+                 text_color: Optional[Tuple[int, int, int]] = None,
                  style: str = 'default',
                  border_radius: int = 20):
         self.rect = pygame.Rect(x, y, width, height)
         self.original_rect = self.rect.copy()
         self.text = text
         self.base_color = color if color is not None else Colors.HIGHLIGHT
+        self.text_color = text_color if text_color is not None else Colors.WHITE
         self.style = style
         self.hover = False
         self.disabled = False
@@ -60,6 +62,7 @@ class Button:
                     max(0, int(g * 0.6)),
                     max(0, int(b * 0.6))
                 )
+                text_color = self.text_color
             elif self.hover:
                 # Lighten the base color for hover
                 fill_color = (
@@ -68,6 +71,7 @@ class Button:
                     min(255, int(b * 0.95 + 255 * 0.05))
                 )
                 border_color = self.base_color
+                text_color = self.text_color
             else:
                 # Normal state - slightly lighter than base
                 fill_color = (
@@ -76,10 +80,7 @@ class Button:
                     min(255, int(b * 0.9 + 255 * 0.1))
                 )
                 border_color = self.base_color
-
-            # Calculate text color based on background brightness
-            brightness = (fill_color[0] * 0.299 + fill_color[1] * 0.587 + fill_color[2] * 0.114) / 255
-            text_color = Colors.WHITE if brightness < 0.7 else Colors.NAVY_DARKEST
+                text_color = self.text_color
 
         # Apply pressed offset
         if self._pressed and not self.disabled:

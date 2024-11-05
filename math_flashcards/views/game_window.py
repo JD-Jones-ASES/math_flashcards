@@ -140,7 +140,6 @@ class GameWindow:
     def _create_difficulty_buttons(self) -> Dict[DifficultyLevel, Button]:
         """Create difficulty selection buttons"""
         buttons = {}
-        # Calculate position below operations list with spacing
         operations_height = (self.layout.HEADER_HEIGHT + self.layout.PADDING +
                              self.layout.LIST_ITEM_HEIGHT * 4)
         start_y = operations_height + self.layout.SECTION_SPACING
@@ -163,18 +162,21 @@ class GameWindow:
                 button_width,
                 self.layout.BUTTON_HEIGHT,
                 difficulty.value,
-                settings['color']  # Using the difficulty-specific color
+                settings['color'],
+                settings['text_color']
             )
             y += self.layout.BUTTON_HEIGHT + button_spacing
 
         # Add Custom mode button at the bottom with some extra spacing
+        settings = GameSettings.DIFFICULTY_SETTINGS[DifficultyLevel.CUSTOM]
         buttons[DifficultyLevel.CUSTOM] = Button(
             self.layout.PADDING,
             y + button_spacing,
             button_width,
             self.layout.BUTTON_HEIGHT,
             DifficultyLevel.CUSTOM.value,
-            GameSettings.DIFFICULTY_SETTINGS[DifficultyLevel.CUSTOM]['color']  # Using Custom mode color
+            settings['color'],
+            settings['text_color']
         )
 
         return buttons

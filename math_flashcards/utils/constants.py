@@ -42,11 +42,11 @@ class Colors:
     ERROR: Tuple[int, int, int] = (220, 53, 89)  # Warm red
 
     # Difficulty level colors
-    INTRO_MODE: Tuple[int, int, int] = (65, 135, 255)  # Light navy
-    BASIC_MODE: Tuple[int, int, int] = (40, 167, 145)  # Teal
-    MEDIUM_MODE: Tuple[int, int, int] = (120, 145, 255)  # Periwinkle
-    HARD_MODE: Tuple[int, int, int] = (180, 55, 155)  # Royal purple
-    CUSTOM_MODE: Tuple[int, int, int] = (255, 145, 95)  # Coral orange
+    INTRO_MODE: Tuple[int, int, int] = (82, 153, 255)  # Softer blue - welcoming, matches the UI theme
+    BASIC_MODE: Tuple[int, int, int] = (72, 187, 155)  # Calming teal - slight adjustment for harmony
+    MEDIUM_MODE: Tuple[int, int, int] = (130, 110, 245)  # Muted purple - progression from blue
+    HARD_MODE: Tuple[int, int, int] = (220, 95, 145)  # Rose pink - distinct but not harsh
+    CUSTOM_MODE: Tuple[int, int, int] = (255, 145, 95)  # Warm orange
 
 
 @dataclass
@@ -163,7 +163,6 @@ class GameSettings:
         ]
     }
 
-    # Difficulty configurations
     DIFFICULTY_SETTINGS = {
         DifficultyLevel.INTRO: {
             'number_range': (1, 7),
@@ -180,7 +179,8 @@ class GameSettings:
                 'max_factor': 7,
                 'max_product': 49
             },
-            'color': Colors.INTRO_MODE
+            'color': Colors.INTRO_MODE,
+            'text_color': Colors.WHITE
         },
         DifficultyLevel.BASIC: {
             'number_range': (1, 12),
@@ -197,7 +197,8 @@ class GameSettings:
                 'max_factor': 12,
                 'max_product': 144
             },
-            'color': Colors.BASIC_MODE
+            'color': Colors.BASIC_MODE,
+            'text_color': Colors.WHITE
         },
         DifficultyLevel.MEDIUM: {
             'number_range': (1, 20),
@@ -214,24 +215,26 @@ class GameSettings:
                 'max_factor': 20,
                 'max_product': 400
             },
-            'color': Colors.MEDIUM_MODE
+            'color': Colors.MEDIUM_MODE,
+            'text_color': Colors.WHITE
         },
         DifficultyLevel.HARD: {
-            'number_range': (1, 50),
+            'number_range': (1, 30),
             'operators': ['+', '-', '*', '/'],
             'max_digits': 2,
             'allows_negative': True,
             'requires_decimals': False,
             'division_rules': {
-                'max_dividend': 2500,
-                'max_divisor': 50,
-                'max_quotient': 50
+                'max_dividend': 900,
+                'max_divisor': 30,
+                'max_quotient': 30
             },
             'multiplication_rules': {
                 'max_factor': 50,
                 'max_product': 2500
             },
-            'color': Colors.HARD_MODE
+            'color': Colors.HARD_MODE,
+            'text_color': Colors.WHITE
         },
         DifficultyLevel.CUSTOM: {
             'number_range': (1, 20),
@@ -248,7 +251,8 @@ class GameSettings:
                 'max_factor': 20,
                 'max_product': 400
             },
-            'color': Colors.CUSTOM_MODE
+            'color': Colors.CUSTOM_MODE,
+            'text_color': Colors.WHITE
         }
     }
 
