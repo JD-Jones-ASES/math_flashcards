@@ -84,34 +84,43 @@ class GameWindow:
         
         # Difficulty buttons
         self.difficulty_buttons = self._create_difficulty_buttons()
-        
+
         # Submit button
         button_x = self.layout.content_center_x - self.layout.BUTTON_WIDTH // 2
-        button_y = (self.layout.content_center_y + 
-                   self.layout.TRIANGLE_SIZE // 2 + 40)
+        button_y = (self.layout.content_center_y +
+                    self.layout.TRIANGLE_SIZE // 2 + 40)
         self.submit_button = Button(
             button_x, button_y,
             self.layout.BUTTON_WIDTH, self.layout.BUTTON_HEIGHT,
-            "Submit", Colors.HIGHLIGHT
+            "Submit",
+            color=Colors.NAVY_PRIMARY,  # Use the navy theme
+            text_color=Colors.WHITE,
+            border_radius=25  # More rounded corners
         )
-        
+
         # Add Load and Quit buttons
         buttons_y = button_y + self.layout.BUTTON_HEIGHT + 10
         button_spacing = 20
         total_width = (self.layout.BUTTON_WIDTH * 2) + button_spacing
         load_x = self.layout.content_center_x - (total_width // 2)
         quit_x = load_x + self.layout.BUTTON_WIDTH + button_spacing
-        
+
         self.load_button = Button(
             load_x, buttons_y,
             self.layout.BUTTON_WIDTH, self.layout.BUTTON_HEIGHT,
-            "Load", Colors.HIGHLIGHT
+            "Load",
+            color=Colors.NAVY_LIGHT,  # Lighter navy for secondary action
+            text_color=Colors.WHITE,
+            border_radius=25
         )
-        
+
         self.quit_button = Button(
             quit_x, buttons_y,
             self.layout.BUTTON_WIDTH, self.layout.BUTTON_HEIGHT,
-            "Quit", Colors.ERROR
+            "Quit",
+            color=Colors.ERROR,  # Keep the error color for quit
+            text_color=Colors.WHITE,
+            border_radius=25
         )
         
         # Stats panel
