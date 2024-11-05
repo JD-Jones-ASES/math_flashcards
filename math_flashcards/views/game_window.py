@@ -378,6 +378,11 @@ class GameWindow:
         if self.admin_panel_open:
             self._handle_admin_panel_hover(mouse_pos)
 
+            # Update confirmation button states if they exist
+            if hasattr(self, 'confirm_cancel_button') and hasattr(self, 'confirm_delete_button'):
+                self.confirm_cancel_button.update_hover(mouse_pos)
+                self.confirm_delete_button.update_hover(mouse_pos)
+
             # Update admin message timer if exists
             if self.admin_message and current_time - self.admin_message_timer > 2000:  # 2 seconds
                 self.admin_message = None
@@ -963,7 +968,7 @@ class GameWindow:
             )
 
     def _draw_delete_confirmation(self, x: int, y: int, width: int, height: int) -> None:
-        """Draw delete confirmation dialog"""
+        """Draw delete confirmation dialog with styled buttons"""
         # Draw confirmation message
         msg = f"Are you sure you want to delete player '{self.admin_confirm_delete}'?"
         msg_surface = self.fonts['normal'].render(msg, True, Colors.BLACK)
@@ -973,63 +978,80 @@ class GameWindow:
         )
         self.screen.blit(msg_surface, msg_pos)
 
-        # Draw buttons
-        button_width = 100
+        # Button dimensions matching our other buttons
+        button_width = 120
         button_height = 36
         button_y = y + (height * 2 // 3)
+        spacing = 20
 
-        # Cancel button
-        cancel_x = x + (width // 2) - button_width - 10
-        cancel_rect = pygame.Rect(cancel_x, button_y, button_width, button_height)
-        pygame.draw.rect(self.screen, Colors.BORDER_GRAY, cancel_rect)
+        # Calculate positions to center the buttons
+        total_width = (button_width * 2) + spacing
+        cancel_x = x + (width - total_width) // 2
+        delete_x = cancel_x + button_width + spacing
 
-        cancel_text = self.fonts['small'].render("Cancel", True, Colors.BLACK)
-        self.screen.blit(cancel_text, cancel_text.get_rect(center=cancel_rect.center))
+        # Create buttons if they don't exist
+        if not hasattr(self, 'confirm_cancel_button'):
+            self.confirm_cancel_button = Button(
+                cancel_x, button_y,
+                button_width, button_height,
+                "Cancel",
+                color=Colors.NAVY_LIGHT,  # Light navy for secondary action
+                text_color=Colors.WHITE,
+                border_radius=25
+            )
 
-        # Delete button
-        delete_x = x + (width // 2) + 10
-        delete_rect = pygame.Rect(delete_x, button_y, button_width, button_height)
-        pygame.draw.rect(self.screen, Colors.ERROR, delete_rect)
+        if not hasattr(self, 'confirm_delete_button'):
+            self.confirm_delete_button = Button(
+                delete_x, button_y,
+                button_width, button_height,
+                "Delete",
+                color=Colors.ERROR,
+                text_color=Colors.WHITE,
+                border_radius=25
+            )
 
-        delete_text = self.fonts['small'].render("Delete", True, Colors.WHITE)
-        self.screen.blit(delete_text, delete_text.get_rect(center=delete_rect.center))
+        # Draw buttons
+        self.confirm_cancel_button.draw(self.screen, self.fonts['normal'])
+        self.confirm_delete_button.draw(self.screen, self.fonts['normal'])
 
         # Store rects for click handling
         self.admin_confirm_buttons = {
-            'cancel': cancel_rect,
-            'delete': delete_rect
+            'cancel': self.confirm_cancel_button.rect,
+            'delete': self.confirm_delete_button.rect
         }
 
-    # In game_window.py, replace the _handle_admin_panel_click method:
-
     def _handle_admin_panel_click(self, pos: Tuple[int, int]) -> bool:
-        """Handle clicks in the admin panel - Preserved exactly as original"""
+        """Handle clicks in the admin panel"""
         if self.admin_confirm_delete:
             # Handle confirmation dialog buttons
-            for action, rect in self.admin_confirm_buttons.items():
-                if rect.collidepoint(pos):
-                    if action == 'delete':
-                        success = self.game_session.player_controller.delete_player(
-                            self.admin_confirm_delete
-                        )
-                        self.admin_message = (
-                            f"Player {self.admin_confirm_delete} deleted successfully"
-                            if success else
-                            f"Error deleting player {self.admin_confirm_delete}"
-                        )
-                        self.admin_message_timer = pygame.time.get_ticks()
+            if hasattr(self, 'confirm_cancel_button'):
+                if self.confirm_cancel_button.handle_click(pos):
+                    self.admin_confirm_delete = None
+                    return True
 
-                        # If the deleted player was the current player, return to login
-                        if success and self.game_session.player.name == self.admin_confirm_delete:
-                            # Post a custom event to trigger login screen
-                            pygame.event.post(pygame.event.Event(
-                                pygame.USEREVENT,
-                                {'action': 'load'}  # Reuse the 'load' action to return to login
-                            ))
-                            self.admin_panel_open = False
+            if hasattr(self, 'confirm_delete_button'):
+                if self.confirm_delete_button.handle_click(pos):
+                    success = self.game_session.player_controller.delete_player(
+                        self.admin_confirm_delete
+                    )
+                    self.admin_message = (
+                        f"Player {self.admin_confirm_delete} deleted successfully"
+                        if success else
+                        f"Error deleting player {self.admin_confirm_delete}"
+                    )
+                    self.admin_message_timer = pygame.time.get_ticks()
+
+                    # If the deleted player was the current player, return to login
+                    if success and self.game_session.player.name == self.admin_confirm_delete:
+                        pygame.event.post(pygame.event.Event(
+                            pygame.USEREVENT,
+                            {'action': 'load'}
+                        ))
+                        self.admin_panel_open = False
 
                     self.admin_confirm_delete = None
                     return True
+
             return True
 
         # Handle clicks on delete buttons
