@@ -1,5 +1,6 @@
 """
 Main entry point for the Math Flashcards application.
+Running this script from the terminal or your favorite IDE will let you play.
 """
 import os
 import sys
