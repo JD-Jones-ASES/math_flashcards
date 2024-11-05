@@ -873,13 +873,17 @@ class GameWindow:
                 self.admin_message = None
 
     def _draw_player_list(self, x: int, y: int, width: int, height: int) -> None:
-        """Draw scrollable player list with modernized styling and working delete buttons"""
+        """Draw scrollable player list with modern, clean styling"""
         # Get player list from game session's player controller
         player_controller = self.game_session.player_controller
         players = player_controller.load_players()
 
+        # Background styling
+        background_rect = pygame.Rect(x, y, width, height)
+        pygame.draw.rect(self.screen, Colors.WHITE, background_rect)
+
         # Calculate list metrics
-        item_height = 50  # Increased height for better spacing
+        item_height = 56  # Increased height for more spacious feel
         visible_items = height // item_height
         max_scroll = max(0, len(players) - visible_items)
 
@@ -887,85 +891,106 @@ class GameWindow:
         for i, player in enumerate(players[self.admin_scroll_offset:
         self.admin_scroll_offset + visible_items]):
             item_y = y + (i * item_height)
-            item_rect = pygame.Rect(x, item_y, width, item_height)
 
-            # Draw item background with hover effect
-            if self.admin_hover_player == (i + self.admin_scroll_offset):
-                pygame.draw.rect(self.screen, Colors.LIGHT_HIGHLIGHT, item_rect, border_radius=8)
-            else:
-                pygame.draw.rect(self.screen, Colors.WHITE, item_rect, border_radius=8)
+            # Full-width row for hover effect
+            row_rect = pygame.Rect(x, item_y, width, item_height)
 
-            # Draw player name with enhanced styling
+            # Hover effect
+            is_hovered = self.admin_hover_player == (i + self.admin_scroll_offset)
+            if is_hovered:
+                # Draw a light blue background for the entire row
+                hover_color = (240, 247, 255)  # Light blue
+                pygame.draw.rect(self.screen, hover_color, row_rect)
+
+                # Add subtle left border accent when hovered
+                accent_rect = pygame.Rect(x, item_y, 3, item_height)
+                pygame.draw.rect(self.screen, Colors.HIGHLIGHT, accent_rect)
+
+            # Draw player name
             name_surface = self.fonts['normal'].render(player, True, Colors.NAVY_PRIMARY)
-            name_pos = (x + 20, item_y + (item_height - name_surface.get_height()) // 2)
+            name_pos = (x + 24, item_y + (item_height - name_surface.get_height()) // 2)
             self.screen.blit(name_surface, name_pos)
 
-            # Draw delete button only for non-protected players
+            # Draw delete button for non-protected players
             if player != "Mr. Jones":
-                # CRITICAL: Keep original delete button dimensions and position for click detection
-                delete_rect = pygame.Rect(
-                    x + width - 40,  # Maintain original x position for click detection
-                    item_y + (item_height - 30) // 2,
-                    30,  # Original width
-                    30  # Original height
-                )
+                # Delete button dimensions and position
+                button_width = 80
+                button_height = 32
+                button_x = x + width - button_width - 16
+                button_y = item_y + (item_height - button_height) // 2
 
-                # Visual button is larger but click detection uses original rect
-                visual_delete_rect = pygame.Rect(
-                    delete_rect.x - 20,  # Wider visual button
-                    delete_rect.y - 3,
-                    70,  # Wider visual button
-                    36  # Taller visual button
-                )
+                button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
 
-                # Draw delete button with hover effect
-                button_hover = (self.admin_hover_player == (i + self.admin_scroll_offset) and
-                                delete_rect.collidepoint(pygame.mouse.get_pos()))
+                # Check if mouse is over delete button
+                delete_hovered = (is_hovered and button_rect.collidepoint(pygame.mouse.get_pos()))
 
-                if button_hover:
-                    pygame.draw.rect(self.screen, Colors.ERROR, visual_delete_rect, border_radius=18)
-                    delete_text = self.fonts['small'].render("Delete", True, Colors.WHITE)
+                if delete_hovered:
+                    # Danger state
+                    bg_color = Colors.ERROR
+                    text_color = Colors.WHITE
+                    border_color = Colors.ERROR
                 else:
-                    pygame.draw.rect(self.screen, Colors.WHITE, visual_delete_rect, border_radius=18)
-                    pygame.draw.rect(self.screen, Colors.ERROR, visual_delete_rect, border_radius=18, width=1)
-                    delete_text = self.fonts['small'].render("Delete", True, Colors.ERROR)
+                    # Normal state - subtle design
+                    bg_color = Colors.WHITE
+                    text_color = Colors.ERROR
+                    border_color = (255, 200, 200)  # Light red border
 
-                # Center the text in the visual button
-                text_rect = delete_text.get_rect(center=visual_delete_rect.center)
+                # Draw button background
+                pygame.draw.rect(self.screen, bg_color, button_rect, border_radius=16)
+                if not delete_hovered:
+                    # Only draw border in normal state
+                    pygame.draw.rect(self.screen, border_color, button_rect, 1, border_radius=16)
+
+                # Draw button text
+                delete_text = self.fonts['small'].render("Delete", True, text_color)
+                text_rect = delete_text.get_rect(center=button_rect.center)
                 self.screen.blit(delete_text, text_rect)
 
             # Draw separator line
-            if i < len(players) - 1:
-                pygame.draw.line(
-                    self.screen,
-                    Colors.BORDER_GRAY,
-                    (x + 10, item_y + item_height - 1),
-                    (x + width - 10, item_y + item_height - 1)
-                )
+            line_y = item_y + item_height - 1
+            pygame.draw.line(
+                self.screen,
+                (240, 240, 240),  # Very light gray
+                (x + 16, line_y),
+                (x + width - 16, line_y)
+            )
+
+        # Add final separator line at the bottom of the list
+        final_line_y = y + (min(len(players), visible_items) * item_height) - 1
+        pygame.draw.line(
+            self.screen,
+            (240, 240, 240),
+            (x + 16, final_line_y),
+            (x + width - 16, final_line_y)
+        )
 
         # Draw scroll bar if needed
         if max_scroll > 0:
-            scroll_bar_width = 8
-            scroll_bar_height = height
-            scroll_bar_x = x + width + 10  # Moved slightly right
-
-            # Draw scroll bar background
-            pygame.draw.rect(
-                self.screen,
-                Colors.WIN_GRAY,
-                (scroll_bar_x, y, scroll_bar_width, scroll_bar_height),
-                border_radius=4
+            bar_width = 4
+            bar_right_margin = 4
+            scroll_track_rect = pygame.Rect(
+                x + width - bar_width - bar_right_margin,
+                y,
+                bar_width,
+                height
             )
 
-            # Draw scroll bar handle
-            handle_height = max(40, scroll_bar_height * (visible_items / len(players)))
-            handle_pos = (self.admin_scroll_offset / max_scroll) * (scroll_bar_height - handle_height)
-            pygame.draw.rect(
-                self.screen,
-                Colors.NAVY_LIGHT,
-                (scroll_bar_x, y + handle_pos, scroll_bar_width, handle_height),
-                border_radius=4
+            # Draw scroll track
+            pygame.draw.rect(self.screen, (245, 245, 245), scroll_track_rect)
+
+            # Calculate and draw scroll thumb
+            visible_ratio = visible_items / len(players)
+            thumb_height = max(30, int(height * visible_ratio))
+            thumb_pos = y + (self.admin_scroll_offset / max_scroll) * (height - thumb_height)
+            thumb_rect = pygame.Rect(
+                x + width - bar_width - bar_right_margin,
+                thumb_pos,
+                bar_width,
+                thumb_height
             )
+
+            # Draw rounded scroll thumb
+            pygame.draw.rect(self.screen, Colors.NAVY_LIGHT, thumb_rect, border_radius=2)
 
     def _draw_delete_confirmation(self, x: int, y: int, width: int, height: int) -> None:
         """Draw delete confirmation dialog with styled buttons"""
@@ -1100,16 +1125,25 @@ class GameWindow:
         panel_x = (self.layout.WINDOW_WIDTH - panel_width) // 2
         panel_y = (self.layout.WINDOW_HEIGHT - panel_height) // 2
 
-        content_x = panel_x + 15
-        content_y = panel_y + 50
-        content_width = panel_width - 30
-        item_height = 40
+        content_x = panel_x + 20
+        content_y = panel_y + 50  # After header
+        content_width = panel_width - 40
+        item_height = 56  # Match the height used in _draw_player_list
 
-        # Check if mouse is over any player item
-        rect = pygame.Rect(content_x, content_y, content_width, panel_height - 70)
-        if rect.collidepoint(pos):
-            index = (pos[1] - content_y) // item_height + self.admin_scroll_offset
-            self.admin_hover_player = index
+        # Check if mouse is within the list area
+        list_rect = pygame.Rect(content_x, content_y, content_width, panel_height - 70)
+
+        if list_rect.collidepoint(pos):
+            # Calculate which item is being hovered
+            relative_y = pos[1] - content_y
+            hovered_index = (relative_y // item_height) + self.admin_scroll_offset
+
+            # Verify the index is valid
+            players = self.game_session.player_controller.load_players()
+            if 0 <= hovered_index < len(players):
+                self.admin_hover_player = hovered_index
+            else:
+                self.admin_hover_player = None
         else:
             self.admin_hover_player = None
 
