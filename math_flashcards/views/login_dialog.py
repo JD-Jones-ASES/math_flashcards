@@ -28,7 +28,7 @@ class PlayerInput:
         if event.key == pygame.K_BACKSPACE:
             self.text = self.text[:-1]
             self.error_message = ""
-        elif event.key == pygame.K_RETURN:
+        elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):  # Modified this line
             pass  # Handled by dialog
         elif event.unicode:
             # Validate input
@@ -191,25 +191,25 @@ class LoginDialog:
         """Handle input events and return selected player name when ready"""
         if event.type == pygame.KEYDOWN:
             self.name_input.handle_input(event)
-            if event.key == pygame.K_RETURN and self.name_input.text.strip():
+            if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER) and self.name_input.text.strip():  # Modified this line
                 return self._validate_new_player(self.name_input.text.strip())
-                
+
         elif event.type == pygame.MOUSEBUTTONDOWN:
             # Handle mouse wheel scrolling
             if event.button in (4, 5):  # 4 is scroll up, 5 is scroll down
                 self.player_list.handle_scroll(1 if event.button == 5 else -1)
                 return None
-                
+
             # Handle new player button
-            if (self.new_player_button.handle_click(event.pos) and 
-                self.name_input.text.strip()):
+            if (self.new_player_button.handle_click(event.pos) and
+                    self.name_input.text.strip()):
                 return self._validate_new_player(self.name_input.text.strip())
-                
+
             # Handle player list selection
             selected = self.player_list.handle_click(event.pos)
             if selected:
                 return selected
-                
+
         return None
 
     def _validate_new_player(self, name: str) -> Optional[str]:
