@@ -109,7 +109,8 @@ class GameSession:
             self.state.feedback_timer = pygame.time.get_ticks()
             self.generate_new_question()
         else:
-            self.state.feedback = 'Try Again!'
+            self.state.feedback = 'incorrect'  # Changed from 'Try Again!' to use as a state identifier
+            self.state.feedback_timer = pygame.time.get_ticks()
             self.state.user_input = ''
             
         return correct

@@ -1552,16 +1552,54 @@ class GameWindow:
 
         # Draw feedback message if any
         if self.game_session.state.feedback:
-            color = (Colors.SUCCESS if self.game_session.state.feedback == 'Correct!'
-                     else Colors.ERROR)
-            feedback_surface = self.fonts['normal'].render(
-                self.game_session.state.feedback, True, color
-            )
-            feedback_pos = (center_x, center_y + half_size + 80)
-            self.screen.blit(
-                feedback_surface,
-                feedback_surface.get_rect(center=feedback_pos)
-            )
+            feedback_y = center_y - half_size - 80
+            if self.game_session.state.feedback == 'Correct!':
+                # Draw success feedback
+                feedback_surface = self.fonts['normal'].render('Correct!', True, Colors.SUCCESS)
+                feedback_pos = (center_x, feedback_y)
+                self.screen.blit(feedback_surface, feedback_surface.get_rect(center=feedback_pos))
+            elif self.game_session.state.feedback == 'incorrect':
+                # Draw enhanced incorrect feedback
+                panel_width = 300
+                panel_height = 100
+                panel_rect = pygame.Rect(
+                    center_x - panel_width // 2,
+                    feedback_y - panel_height // 2,
+                    panel_width,
+                    panel_height
+                )
+
+                # Draw panel with subtle animation based on feedback timer
+                progress = min(1.0, (pygame.time.get_ticks() - self.game_session.state.feedback_timer) / 300)
+                panel_alpha = int(255 * progress)
+
+                # Create panel surface with transparency
+                panel_surface = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
+                pygame.draw.rect(panel_surface, (*Colors.WHITE, 230),
+                                 panel_surface.get_rect(), border_radius=12)
+                pygame.draw.rect(panel_surface, (*Colors.ERROR, panel_alpha),
+                                 panel_surface.get_rect(), border_radius=12, width=2)
+
+                # Draw encouraging message
+                message = 'Almost there!'
+                message_surface = self.fonts['normal'].render(message, True, Colors.ERROR)
+                message_rect = message_surface.get_rect(
+                    centerx=panel_width // 2,
+                    centery=panel_height // 3
+                )
+                panel_surface.blit(message_surface, message_rect)
+
+                # Draw supportive subtext
+                subtext = 'Take another look at this one.'
+                subtext_surface = self.fonts['small'].render(subtext, True, Colors.TEXT_GRAY)
+                subtext_rect = subtext_surface.get_rect(
+                    centerx=panel_width // 2,
+                    centery=2 * panel_height // 3
+                )
+                panel_surface.blit(subtext_surface, subtext_rect)
+
+                # Apply panel with animation
+                self.screen.blit(panel_surface, panel_rect)
 
     def _handle_admin_panel_hover(self, pos: Tuple[int, int]) -> None:
         """Update hover states in admin panel"""
