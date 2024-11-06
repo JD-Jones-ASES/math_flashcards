@@ -6,14 +6,14 @@ Chat GPT 4o helped fix a small problem while Claude had reached his limit.
 
 Grok 2 (Beta) made the icon.
 
-## Math Flashcards v0.8.5
+## Math Flashcards v0.8.7
 
 An interactive math practice application featuring adaptive learning, detailed analytics, and personalized difficulty progression. The Hard and Custom difficulty levels are experimental. Skill practice for students is found in Intro, Basic, and Medium.
 
-## Beta
+## Recent Beta Updates
 - Graphics overhaul for various panels in game.
-- Higher difficulties scale in unusual ways.
 - Refining the "Custom" difficulty is an ongoing project.
+- Improved file i/o to reduce disk writes.
 
 
 ## Features
@@ -25,7 +25,7 @@ An interactive math practice application featuring adaptive learning, detailed a
   - Basic: Standard multiplication table range
   - Medium: Extended range with negative numbers
   - Hard: Advanced operations with larger numbers
-  - Custom: AI-driven personalized difficulty settings
+  - Custom: Personalized difficulty setting
 - **Detailed Analytics**: 
   - Track progress across operations
   - Monitor mastery of specific math facts
@@ -51,7 +51,7 @@ An interactive math practice application featuring adaptive learning, detailed a
 ```bash
 # Clone the repository
 git clone [repository-url]
-cd math-flash-cards
+cd math_flash_cards
 
 # Install dependencies
 pip install -e .
@@ -80,11 +80,11 @@ python -m math_flashcards.main
 
 ```
 math_flashcards/
-├── controllers/       # Game logic and control flow
+├── controllers/      # Game logic and control flow
 ├── models/           # Data structures and business logic
 ├── utils/            # Helper functions and constants
 ├── views/            # UI components and rendering
-└── data/            # Data files
+└── data/             # Data files
 ```
 
 ### Key Components
@@ -114,23 +114,14 @@ math_flashcards/
    - Introduction to negative numbers
 
 4. **Hard Mode**
-   - Number range: 1-50
+   - Number range: 1-30
    - All operations including division
    - Advanced number manipulation
 
 5. **Custom Mode**
    - Adaptive number range
-   - AI-selected operations based on performance
+   - Numbers chosen based on performance
    - Personalized fact selection
-
-### Analytics & Progress Tracking
-
-- Detailed performance metrics per operation
-- Learning curve analysis
-- Mastery tracking for individual math facts
-- Achievement system
-- Session-based statistics
-- Long-term progress monitoring
 
 ## Contributing
 
@@ -166,7 +157,7 @@ These dependencies are used under their respective licenses. This project's MIT 
 
 ## Version
 
-Current Version: 0.8.5-beta+1
+Current Version: 0.8.7
 
 ---
 
@@ -187,13 +178,6 @@ pyinstaller main.spec
 - Player data is stored in JSON format
 - Automatic backups are maintained
 - Data validation ensures integrity
-
-### Architecture
-
-The application follows a Model-View-Controller (MVC) pattern:
-- Models handle data structures and business logic
-- Views manage UI rendering and user input
-- Controllers coordinate game flow and state management
 
 ### Key Classes
 
