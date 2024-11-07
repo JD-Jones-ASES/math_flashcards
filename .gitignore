@@ -20,6 +20,8 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+*.pfx
+sign_build.py
 
 # PyInstaller
 *.manifest
