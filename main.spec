@@ -2,6 +2,16 @@
 import os
 import sys
 import platform
+
+# Add project root to path to import version
+project_root = os.path.dirname(os.path.abspath('__file__'))
+sys.path.insert(0, os.path.join(project_root, 'math_flashcards'))
+
+# Import version information
+from utils.version import (
+    VERSION, APP_NAME, APP_AUTHOR, APP_COPYRIGHT,
+    APP_LICENSE, APP_REPOSITORY, APP_ID, WINDOWS_METADATA
+)
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules, collect_dynamic_libs
 
 block_cipher = None
@@ -67,7 +77,14 @@ if platform.system() == 'Darwin':
     # Mac-specific
     icon_file = os.path.join(project_root, 'math_flashcards', 'data', 'icon.icns')
     # Add any Mac-specific imports here if needed
-    bundle_identifier = 'org.mathflashcards.app'
+    bundle_identifier = APP_ID
+
+    # Mac signing settings
+    codesign_identity = 'Apple Development: Your Name (TEAM_ID)'  # Replace with your identity
+    entitlements_file = os.path.join(project_root, 'entitlements.plist')
+
+    # Provision profile if using paid developer account
+    provision_profile = None  # Replace with path if using provisioning profile
 else:
     # Windows-specific
     icon_file = os.path.join(project_root, 'math_flashcards', 'data', 'icon.ico')
@@ -109,8 +126,8 @@ if platform.system() == 'Darwin':
         strip=False,
         upx=True,
         console=False,
-        codesign_identity=None,  # Set this if you have a Mac Developer certificate
-        entitlements_file=None,
+        codesign_identity=codesign_identity,
+        entitlements_file=entitlements_file,
         icon=icon_file
     )
 
@@ -123,17 +140,19 @@ if platform.system() == 'Darwin':
         icon=icon_file,
         bundle_identifier=bundle_identifier,
         info_plist={
-            'CFBundleName': 'MathFlashcards',
-            'CFBundleDisplayName': 'Math Flashcards',
-            'CFBundleGetInfoString': "Math practice application",
+            'CFBundleName': APP_NAME,
+            'CFBundleDisplayName': APP_NAME,
+            'CFBundleGetInfoString': WINDOWS_METADATA['FileDescription'],
             'CFBundleIdentifier': bundle_identifier,
-            'CFBundleVersion': '0.8.7',
-            'CFBundleShortVersionString': '0.8.7',
-            'NSHighResolutionCapable': 'True'
-        }
+            'CFBundleVersion': VERSION,
+            'CFBundleShortVersionString': VERSION,
+            'NSHighResolutionCapable': 'True',
+            **MAC_METADATA  # Unpack all Mac-specific metadata from version.py
+        },
+        sign_with_entitlements=True
     )
 else:
-    # Windows executable
+    # Windows executable settings remain unchanged
     exe = EXE(
         pyz,
         a.scripts,
