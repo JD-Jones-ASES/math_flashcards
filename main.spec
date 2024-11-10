@@ -76,34 +76,15 @@ pygame_bins = collect_dynamic_libs('pygame')
 if platform.system() == 'Darwin':
     # Mac-specific
     icon_file = os.path.join(project_root, 'math_flashcards', 'data', 'icon.icns')
+    # Add any Mac-specific imports here if needed
     bundle_identifier = APP_ID
 
-    # Mac signing settings - updated for universal binary support
-    codesign_identity = None  # Will be set by build script
+    # Mac signing settings
+    codesign_identity = 'Apple Development: Your Name (TEAM_ID)'  # Replace with your identity
     entitlements_file = os.path.join(project_root, 'entitlements.plist')
 
-    # Architecture settings for universal binary
-    target_arch = None  # This allows PyInstaller to build for the current architecture
-
-    # When building universal binary, we'll run this twice:
-    # Once with target_arch = 'x86_64' (Intel)
-    # Once with target_arch = 'arm64' (Apple Silicon)
-    if os.environ.get('ARCH_TARGET'):
-        target_arch = os.environ['ARCH_TARGET']
-
-    # Additional Mac-specific options
-    INFO_PLIST = {
-        'CFBundleName': APP_NAME,
-        'CFBundleDisplayName': APP_NAME,
-        'CFBundleGetInfoString': WINDOWS_METADATA['FileDescription'],
-        'CFBundleIdentifier': bundle_identifier,
-        'CFBundleVersion': VERSION,
-        'CFBundleShortVersionString': VERSION,
-        'NSHighResolutionCapable': 'True',
-        'LSMinimumSystemVersion': '10.12',
-        'NSAppleArchitecturePriority': ['arm64', 'x86_64'],  # Prioritize Apple Silicon
-        'LSArchitecturePriority': ['arm64', 'x86_64'],
-    }
+    # Provision profile if using paid developer account
+    provision_profile = None  # Replace with path if using provisioning profile
 else:
     # Windows-specific
     icon_file = os.path.join(project_root, 'math_flashcards', 'data', 'icon.ico')
@@ -133,6 +114,7 @@ a = Analysis(
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 # Platform-specific executable settings
+# Platform-specific executable settings
 if platform.system() == 'Darwin':
     exe = EXE(
         pyz,
@@ -151,6 +133,7 @@ if platform.system() == 'Darwin':
         target_arch=target_arch  # Add explicit architecture target
     )
 
+    # Create Mac app bundle (only once)
     app = BUNDLE(
         exe,
         a.binaries,
@@ -159,27 +142,6 @@ if platform.system() == 'Darwin':
         icon=icon_file,
         bundle_identifier=bundle_identifier,
         info_plist=INFO_PLIST,
-        sign_with_entitlements=True
-    )
-
-    # Create Mac app bundle
-    app = BUNDLE(
-        exe,
-        a.binaries,
-        a.datas,
-        name='MathFlashcards.app',
-        icon=icon_file,
-        bundle_identifier=bundle_identifier,
-        info_plist={
-            'CFBundleName': APP_NAME,
-            'CFBundleDisplayName': APP_NAME,
-            'CFBundleGetInfoString': WINDOWS_METADATA['FileDescription'],
-            'CFBundleIdentifier': bundle_identifier,
-            'CFBundleVersion': VERSION,
-            'CFBundleShortVersionString': VERSION,
-            'NSHighResolutionCapable': 'True',
-            **MAC_METADATA  # Unpack all Mac-specific metadata from version.py
-        },
         sign_with_entitlements=True
     )
 else:
