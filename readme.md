@@ -17,6 +17,7 @@ An interactive math practice application featuring adaptive learning and persona
 
 - For developers, all source code is available. The project was built using PyCharm.
 - To simply play the game, download either the Windows or Mac distribution and run the executable or app.
+- Find the distributions under "Releases," and download the *.zip file for your OS from Math Flashcards v0.8.9.
 - You will receive warning from your operating system or virus scanner. Click through these to play.
 
 ### Basic Installation
