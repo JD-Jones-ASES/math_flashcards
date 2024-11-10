@@ -6,14 +6,13 @@ Chat GPT 4o helped with signing certifications, GitHub setup, and debugging smal
 
 Grok 2 (Beta) made the icon.
 
-## Math Flashcards v0.8.8
+## Math Flashcards v0.8.9
 
 An interactive math practice application featuring adaptive learning and personalized difficulty progression. The Custom difficulty level is experimental. Skill practice for students is found in Intro, Basic, and Medium.
 
 ## Recent Beta Updates
-- Custom difficulty is a work in progress.
-- Self-signed certificates are being used to help prevent major OS warnings.
-
+- All features should be considered as in beta.
+ 
 ## Installation
 
 - For developers, all source code is available. The project was built using PyCharm.
@@ -80,11 +79,11 @@ These dependencies are used under their respective licenses. This project's MIT 
 - Claude 3.5 Sonnet wrote the code.
 - Thanks to my colleagues at All Saints Episcopal School. Especially:
   * Mr. Hoffman, for providing help with Apple products.
-  * Mrs. Stith, for beta testing.
+  * Mrs. WhiteMrs. Stith, for beta testing and troubleshooting.
 
 ## Version
 
-Current Version: 0.8.8
+Current Version: 0.8.9
 
 
 ## Support
