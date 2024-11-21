@@ -80,7 +80,7 @@ These dependencies are used under their respective licenses. This project's MIT 
 - Claude 3.5 Sonnet wrote the code.
 - Thanks to my colleagues at All Saints Episcopal School. Especially:
   * Mr. Hoffman, for providing help with Apple products.
-  * Mrs. WhiteMrs. Stith, for beta testing and troubleshooting.
+  * Mrs. White and Mrs. Stith, for beta testing and troubleshooting.
 
 ## Version
 
